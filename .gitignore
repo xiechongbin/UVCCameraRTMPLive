@@ -5,3 +5,4 @@
 /app/build/*
 /app/.externalNativeBuild/*
 /local.properties
+.DS_Store
