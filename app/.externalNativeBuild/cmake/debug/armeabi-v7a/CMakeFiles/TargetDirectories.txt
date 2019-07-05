@@ -1,3 +1,3 @@
-/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/edit_cache.dir
-/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/rebuild_cache.dir
-/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/native-lib.dir
+/Users/YoungWu/StudioProjects/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/YoungWu/StudioProjects/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+/Users/YoungWu/StudioProjects/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/native-lib.dir

@@ -1,16 +1,16 @@
 {
   "buildFiles": [
-    "/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/CMakeLists.txt"
+    "/Users/YoungWu/StudioProjects/UVCCameraRTMPLive/app/CMakeLists.txt"
   ],
   "cleanCommands": [
-    "/Users/cxy/work/android-sdks/cmake/3.6.4111459/bin/cmake --build /Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/debug/x86 --target clean"
+    "/Library/Android/sdk/cmake/3.6.4111459/bin/cmake --build /Users/YoungWu/StudioProjects/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/debug/x86 --target clean"
   ],
   "libraries": {
     "native-lib-Debug-x86": {
       "artifactName": "native-lib",
-      "buildCommand": "/Users/cxy/work/android-sdks/cmake/3.6.4111459/bin/cmake --build /Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/debug/x86 --target native-lib",
+      "buildCommand": "/Library/Android/sdk/cmake/3.6.4111459/bin/cmake --build /Users/YoungWu/StudioProjects/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/debug/x86 --target native-lib",
       "abi": "x86",
-      "output": "/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/build/intermediates/cmake/debug/obj/x86/libnative-lib.so"
+      "output": "/Users/YoungWu/StudioProjects/UVCCameraRTMPLive/app/build/intermediates/cmake/debug/obj/x86/libnative-lib.so"
     }
   }
 }

@@ -1,4 +1,4 @@
-# Install script for directory: /Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app
+# Install script for directory: /Users/YoungWu/StudioProjects/UVCCameraRTMPLive/app
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,5 +40,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/release/x86_64/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/YoungWu/StudioProjects/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/release/x86_64/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
