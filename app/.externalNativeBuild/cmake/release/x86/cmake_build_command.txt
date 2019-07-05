@@ -1,0 +1,15 @@
+Executable : /Users/cxy/work/android-sdks/cmake/3.6.4111459/bin/cmake
+arguments : 
+-H/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app
+-B/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/release/x86
+-DANDROID_ABI=x86
+-DANDROID_PLATFORM=android-21
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/build/intermediates/cmake/release/obj/x86
+-DCMAKE_BUILD_TYPE=Release
+-DANDROID_NDK=/Users/cxy/work/android-sdks/android-ndk-r16b
+-DCMAKE_CXX_FLAGS=
+-DCMAKE_TOOLCHAIN_FILE=/Users/cxy/work/android-sdks/android-ndk-r16b/build/cmake/android.toolchain.cmake
+-DCMAKE_MAKE_PROGRAM=/Users/cxy/work/android-sdks/cmake/3.6.4111459/bin/ninja
+-GAndroid Gradle - Ninja
+jvmArgs : 
+

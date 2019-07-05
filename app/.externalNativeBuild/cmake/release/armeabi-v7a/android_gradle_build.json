@@ -1,0 +1,41 @@
+
+{
+	"buildFiles" : 
+	[
+		"/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/CMakeLists.txt"
+	],
+	"cleanCommands" : 
+	[
+		"/Users/cxy/work/android-sdks/cmake/3.6.4111459/bin/cmake --build /Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/release/armeabi-v7a --target clean"
+	],
+	"cppFileExtensions" : [ "cpp" ],
+	"libraries" : 
+	{
+		"native-lib-Release-armeabi-v7a" : 
+		{
+			"abi" : "armeabi-v7a",
+			"artifactName" : "native-lib",
+			"buildCommand" : "/Users/cxy/work/android-sdks/cmake/3.6.4111459/bin/cmake --build /Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/release/armeabi-v7a --target native-lib",
+			"buildType" : "release",
+			"files" : 
+			[
+				
+				{
+					"flags" : "  --target=armv7-none-linux-androideabi --gcc-toolchain=/Users/cxy/work/android-sdks/android-ndk-r16b/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64 --sysroot=/Users/cxy/work/android-sdks/android-ndk-r16b/sysroot  -Dnative_lib_EXPORTS -isystem /Users/cxy/work/android-sdks/android-ndk-r16b/sources/cxx-stl/gnu-libstdc++/4.9/include -isystem /Users/cxy/work/android-sdks/android-ndk-r16b/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include -isystem /Users/cxy/work/android-sdks/android-ndk-r16b/sources/cxx-stl/gnu-libstdc++/4.9/include/backward  -isystem /Users/cxy/work/android-sdks/android-ndk-r16b/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=21 -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -fno-integrated-as -mthumb -Wa,--noexecstack -Wformat -Werror=format-security   -Os -DNDEBUG  -fPIC    -c ",
+					"src" : "/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/src/main/cpp/native-lib.cpp",
+					"workingDirectory" : "/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/.externalNativeBuild/cmake/release/armeabi-v7a"
+				}
+			],
+			"output" : "/Users/cxy/work/projects/cxy_project_hs/UVCCameraRTMPLive/app/build/intermediates/cmake/release/obj/armeabi-v7a/libnative-lib.so",
+			"toolchain" : "10861520575784459024"
+		}
+	},
+	"toolchains" : 
+	{
+		"10861520575784459024" : 
+		{
+			"cCompilerExecutable" : "/Users/cxy/work/android-sdks/android-ndk-r16b/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang",
+			"cppCompilerExecutable" : "/Users/cxy/work/android-sdks/android-ndk-r16b/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++"
+		}
+	}
+}
