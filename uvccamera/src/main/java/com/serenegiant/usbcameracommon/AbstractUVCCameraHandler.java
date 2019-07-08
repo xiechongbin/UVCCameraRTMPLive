@@ -49,6 +49,7 @@ import com.serenegiant.encoder.MediaVideoEncoder;
 import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.UVCCamera;
+import com.serenegiant.uvccamera.R;
 import com.serenegiant.widget.CameraViewInterface;
 
 import java.io.BufferedOutputStream;
@@ -87,7 +88,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 	private static final int MSG_MEDIA_UPDATE = 7;
 	private static final int MSG_RELEASE = 9;
 
-	private final WeakReference<AbstractUVCCameraHandler.CameraThread> mWeakThread;
+	private final WeakReference<CameraThread> mWeakThread;
 	private volatile boolean mReleased;
 
 	protected AbstractUVCCameraHandler(final CameraThread thread) {

@@ -1,1 +1,1 @@
-include ':app', ':rtmppusher'
+include ':app', ':rtmppusher','uvccamera'

@@ -23,14 +23,14 @@
 
 package com.serenegiant.encoder;
 
-import java.io.IOException;
-
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
+
+import java.io.IOException;
 
 public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
 	private static final boolean DEBUG = true;	// TODO set false on release

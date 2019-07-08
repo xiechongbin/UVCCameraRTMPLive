@@ -23,8 +23,6 @@
 
 package com.serenegiant.encoder;
 
-import java.io.IOException;
-
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -34,6 +32,8 @@ import android.view.Surface;
 
 import com.serenegiant.glutils.EGLBase;
 import com.serenegiant.glutils.RenderHandler;
+
+import java.io.IOException;
 
 /**
  * Encode texture images as H.264 video

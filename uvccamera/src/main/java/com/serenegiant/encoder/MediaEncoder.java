@@ -23,13 +23,13 @@
 
 package com.serenegiant.encoder;
 
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
-
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.util.Log;
+
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
 
 public abstract class MediaEncoder implements Runnable {
 	private static final boolean DEBUG = true;	// TODO set false on release
