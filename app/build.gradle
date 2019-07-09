@@ -14,7 +14,7 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file("../bajie")
+            storeFile file("../bajie.jks")
             keyAlias "bajie"
             keyPassword "@bajie"
             storePassword "@bajie"
