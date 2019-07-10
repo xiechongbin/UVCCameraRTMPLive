@@ -1,12 +1,12 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdkVersion 27
+    buildToolsVersion '27.0.3'
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 28
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0.0"
         multiDexEnabled true
@@ -16,7 +16,7 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
@@ -33,9 +33,5 @@ android {
 
 dependencies {
     api fileTree(include: ['*.jar'], dir: 'libs')
-    api ("com.serenegiant:common:2.12.4"){
-        exclude module: 'support-v4'
-        exclude module: 'recyclerview-v7'
-        exclude module: 'preference-v7'
-    }
+    api "com.serenegiant:common:2.12.4"
 }

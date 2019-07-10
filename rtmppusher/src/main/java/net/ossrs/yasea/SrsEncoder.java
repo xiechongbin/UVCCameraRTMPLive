@@ -27,18 +27,18 @@ public class SrsEncoder {
     public static String x264Preset = "veryfast";
     public static int vPrevWidth = 640;
     public static int vPrevHeight = 360;
-    public static int vPortraitWidth = 720;
-    public static int vPortraitHeight = 1280;
-    public static int vLandscapeWidth = 1280;
-    public static int vLandscapeHeight = 720;
-    public static int vOutWidth = 720;   // Note: the stride of resolution must be set as 16x for hard encoding with some chip like MTK
-    public static int vOutHeight = 1280;  // Since Y component is quadruple size as U and V component, the stride must be set as 32x
-    public static int vBitrate = 2400 * 1024;  // 2400 kbps
+    public static int vPortraitWidth = 360;
+    public static int vPortraitHeight = 640;
+    public static int vLandscapeWidth = 640;
+    public static int vLandscapeHeight = 360;
+    public static int vOutWidth = 360;   // Note: the stride of resolution must be set as 16x for hard encoding with some chip like MTK
+    public static int vOutHeight = 640;  // Since Y component is quadruple size as U and V component, the stride must be set as 32x
+    public static int vBitrate = 1200 * 1024;  // 1200 kbps
     public static final int VFPS = 24;
-    public static final int VGOP = 64;
+    public static final int VGOP = 48;
     public static final int ASAMPLERATE = 44100;
     public static int aChannelConfig = AudioFormat.CHANNEL_IN_STEREO;
-    public static final int ABITRATE = 128 * 1024;  // 128 kbps
+    public static final int ABITRATE = 64 * 1024;  // 64 kbps
 
     private SrsEncodeHandler mHandler;
 
@@ -258,7 +258,7 @@ public class SrsEncoder {
     }
 
     public void setVideoHDMode() {
-        vBitrate = 2400 * 1024;  // 2400 kbps
+        vBitrate = 1200 * 1024;  // 1200 kbps
         x264Preset = "veryfast";
     }
 
@@ -649,20 +649,35 @@ public class SrsEncoder {
     }
 
     private native void setEncoderResolution(int outWidth, int outHeight);
+
     private native void setEncoderFps(int fps);
+
     private native void setEncoderGop(int gop);
+
     private native void setEncoderBitrate(int bitrate);
+
     private native void setEncoderPreset(String preset);
+
     private native byte[] RGBAToI420(byte[] rgbaFrame, int width, int height, boolean flip, int rotate);
+
     private native byte[] RGBAToNV12(byte[] rgbaFrame, int width, int height, boolean flip, int rotate);
+
     private native byte[] ARGBToI420Scaled(int[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width, int crop_height);
+
     private native byte[] ARGBToNV12Scaled(int[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width, int crop_height);
+
     private native byte[] ARGBToI420(int[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree);
+
     private native byte[] ARGBToNV12(int[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree);
+
     private native byte[] NV21ToNV12Scaled(byte[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width, int crop_height);
+
     private native byte[] NV21ToI420Scaled(byte[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width, int crop_height);
+
     private native int RGBASoftEncode(byte[] rgbaFrame, int width, int height, boolean flip, int rotate, long pts);
+
     private native boolean openSoftEncoder();
+
     private native void closeSoftEncoder();
 
     static {

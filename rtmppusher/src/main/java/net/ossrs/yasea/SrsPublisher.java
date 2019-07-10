@@ -142,31 +142,30 @@ public class SrsPublisher {
         }
     }
 
-    public void startEncode() {
+    private void startEncode() {
         if (!mEncoder.start()) {
             return;
         }
-
-        mCameraView.enableEncoding();
-
+        startCamera();
         startAudio();
-    }
-
-    public void stopEncode() {
-        stopAudio();
-        stopCamera();
-        mEncoder.stop();
-    }
-
-    public void pauseEncode() {
-        stopAudio();
-        mCameraView.disableEncoding();
-        mCameraView.stopTorch();
+        mCameraView.enableEncoding();
     }
 
     private void resumeEncode() {
         startAudio();
         mCameraView.enableEncoding();
+    }
+
+    private void pauseEncode() {
+        stopAudio();
+        mCameraView.disableEncoding();
+        mCameraView.stopTorch();
+    }
+
+    private void stopEncode() {
+        stopCamera();
+        stopAudio();
+        mEncoder.stop();
     }
 
     public void startPublish(String rtmpUrl) {
@@ -184,13 +183,6 @@ public class SrsPublisher {
         }
     }
 
-    public void stopPublish() {
-        if (mFlvMuxer != null) {
-            stopEncode();
-            mFlvMuxer.stop();
-        }
-    }
-
     public void pausePublish() {
         if (mFlvMuxer != null) {
             mEncoder.pause();
@@ -198,13 +190,20 @@ public class SrsPublisher {
         }
     }
 
+    public void stopPublish() {
+        if (mFlvMuxer != null) {
+            stopEncode();
+            mFlvMuxer.stop();
+        }
+    }
+
     public boolean startRecord(String recPath) {
         return mMp4Muxer != null && mMp4Muxer.record(new File(recPath));
     }
 
-    public void stopRecord() {
+    public void resumeRecord() {
         if (mMp4Muxer != null) {
-            mMp4Muxer.stop();
+            mMp4Muxer.resume();
         }
     }
 
@@ -214,9 +213,9 @@ public class SrsPublisher {
         }
     }
 
-    public void resumeRecord() {
+    public void stopRecord() {
         if (mMp4Muxer != null) {
-            mMp4Muxer.resume();
+            mMp4Muxer.stop();
         }
     }
 
