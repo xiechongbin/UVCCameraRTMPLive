@@ -193,8 +193,7 @@ static void libenc_setEncoderPreset(JNIEnv *env, jobject thiz, jstring preset) {
     env->ReleaseStringUTFChars(preset, enc_preset);
 }
 
-static void
-libenc_setEncoderResolution(JNIEnv *env, jobject thiz, jint out_width, jint out_height) {
+static void libenc_setEncoderResolution(JNIEnv *env, jobject thiz, jint out_width, jint out_height) {
     int y_size = out_width * out_height;
 
     if (i420_scaled_frame.width != out_width || i420_scaled_frame.height != out_height) {
@@ -239,8 +238,7 @@ static jbyteArray libenc_RGBAToI420(JNIEnv *env, jobject thiz, jbyteArray frame,
     return i420Frame;
 }
 
-static jbyteArray
-libenc_NV21ToNV12Scaled(JNIEnv *env, jobject thiz, jbyteArray frame, jint src_width,
+static jbyteArray libenc_NV21ToNV12Scaled(JNIEnv *env, jobject thiz, jbyteArray frame, jint src_width,
                         jint src_height, jboolean need_flip, jint rotate_degree,
                         jint crop_x, jint crop_y, jint crop_width, jint crop_height) {
     jbyte *rgba_frame = env->GetByteArrayElements(frame, NULL);
@@ -270,8 +268,7 @@ libenc_NV21ToNV12Scaled(JNIEnv *env, jobject thiz, jbyteArray frame, jint src_wi
     return nv12Frame;
 }
 
-static jbyteArray
-libenc_NV21ToI420Scaled(JNIEnv *env, jobject thiz, jbyteArray frame, jint src_width,
+static jbyteArray libenc_NV21ToI420Scaled(JNIEnv *env, jobject thiz, jbyteArray frame, jint src_width,
                         jint src_height, jboolean need_flip, jint rotate_degree,
                         jint crop_x, jint crop_y, jint crop_width, jint crop_height) {
     jbyte *argb_frame = env->GetByteArrayElements(frame, NULL);
@@ -309,8 +306,7 @@ static jbyteArray libenc_ARGBToI420(JNIEnv *env, jobject thiz, jintArray frame, 
 }
 
 // For Bitmap.getPixels() ARGB_8888
-static jbyteArray
-libenc_ARGBToI420Scaled(JNIEnv *env, jobject thiz, jintArray frame, jint src_width,
+static jbyteArray libenc_ARGBToI420Scaled(JNIEnv *env, jobject thiz, jintArray frame, jint src_width,
                         jint src_height, jboolean need_flip, jint rotate_degree,
                         jint crop_x, jint crop_y, jint crop_width, jint crop_height) {
     jint *argb_frame = env->GetIntArrayElements(frame, NULL);
@@ -388,8 +384,7 @@ static jbyteArray libenc_ARGBToNV12(JNIEnv *env, jobject thiz, jintArray frame, 
 }
 
 // For Bitmap.getPixels() ARGB_8888
-static jbyteArray
-libenc_ARGBToNV12Scaled(JNIEnv *env, jobject thiz, jintArray frame, jint src_width,
+static jbyteArray libenc_ARGBToNV12Scaled(JNIEnv *env, jobject thiz, jintArray frame, jint src_width,
                         jint src_height, jboolean need_flip, jint rotate_degree,
                         jint crop_x, jint crop_y, jint crop_width, jint crop_height) {
     jint *argb_frame = env->GetIntArrayElements(frame, NULL);

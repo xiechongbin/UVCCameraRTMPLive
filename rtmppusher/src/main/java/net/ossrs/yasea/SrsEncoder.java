@@ -22,23 +22,24 @@ public class SrsEncoder {
     private static final boolean DEBUG = false;
     private static final String TAG = "SrsEncoder";
 
-    public static final String VCODEC = "video/avc";
-    public static final String ACODEC = "audio/mp4a-latm";
-    public static String x264Preset = "veryfast";
-    public static int vPrevWidth = 640;
-    public static int vPrevHeight = 360;
-    public static int vPortraitWidth = 360;
-    public static int vPortraitHeight = 640;
-    public static int vLandscapeWidth = 640;
-    public static int vLandscapeHeight = 360;
-    public static int vOutWidth = 360;   // Note: the stride of resolution must be set as 16x for hard encoding with some chip like MTK
-    public static int vOutHeight = 640;  // Since Y component is quadruple size as U and V component, the stride must be set as 32x
-    public static int vBitrate = 1200 * 1024;  // 1200 kbps
-    public static final int VFPS = 24;
-    public static final int VGOP = 48;
-    public static final int ASAMPLERATE = 44100;
-    public static int aChannelConfig = AudioFormat.CHANNEL_IN_STEREO;
-    public static final int ABITRATE = 64 * 1024;  // 64 kbps
+    public static final String vCodec = SrsLiveConfig.VIDEO_CODEC;
+    public static final String aCodec = SrsLiveConfig.AUDIO_CODEC;
+    public static String x264Preset = SrsLiveConfig.XH264_VERY_FAST_PRESET;
+
+    public static int vPortraitWidth = SrsLiveConfig.HIGH_DEFINITION_HEIGHT;
+    public static int vPortraitHeight = SrsLiveConfig.HIGH_DEFINITION_WIDTH;
+    public static int vLandscapeWidth = SrsLiveConfig.HIGH_DEFINITION_WIDTH;
+    public static int vLandscapeHeight = SrsLiveConfig.HIGH_DEFINITION_HEIGHT;
+    public static int vOutWidth = SrsLiveConfig.HIGH_DEFINITION_HEIGHT;   // Note: the stride of resolution must be set as 16x for hard encoding with some chip like MTK
+    public static int vOutHeight = SrsLiveConfig.HIGH_DEFINITION_WIDTH;  // Since Y component is quadruple size as U and V component, the stride must be set as 32x
+
+    public static int vBitrate = SrsLiveConfig.HIGH_DEFINITION_BITRATE;//视频比特率
+    public static int vFPS = SrsLiveConfig.NORMAL_FPS;//视频帧率
+    public static final int vGOP = SrsLiveConfig.GOP;//I帧间隔周期
+
+    public static int aBitrate = SrsLiveConfig.HIGH_QUALITY_BITRATE;//音频比特率
+    public static final int aSampleRate = SrsLiveConfig.AUDIO_SAMPLERATE;//音频采样率
+    public static int aChannelConfig = AudioFormat.CHANNEL_IN_STEREO;//立体声通道
 
     private SrsEncodeHandler mHandler;
 
@@ -99,13 +100,13 @@ public class SrsEncoder {
         // Since Y component is quadruple size as U and V component, the stride must be set as 32x
         if (!useSoftEncoder && (vOutWidth % 32 != 0 || vOutHeight % 32 != 0)) {
             if (vmci.getName().contains("MTK")) {
-                //throw new AssertionError("MTK encoding revolution stride must be 32x");
+                throw new AssertionError("MTK encoding revolution stride must be 32x");
             }
         }
 
         setEncoderResolution(vOutWidth, vOutHeight);
-        setEncoderFps(VFPS);
-        setEncoderGop(VGOP);
+        setEncoderFps(vFPS);
+        setEncoderGop(vGOP);
         // Unfortunately for some android phone, the output fps is less than 10 limited by the
         // capacity of poor cheap chips even with x264. So for the sake of quick appearance of
         // the first picture on the player, a spare lower GOP value is suggested. But note that
@@ -124,7 +125,7 @@ public class SrsEncoder {
         // aencoder pcm to aac raw stream.
         // requires sdk level 16+, Android 4.1, 4.1.1, the JELLY_BEAN
         try {
-            aencoder = MediaCodec.createEncoderByType(ACODEC);
+            aencoder = MediaCodec.createEncoderByType(aCodec);
         } catch (IOException e) {
             if (DEBUG) Log.e(TAG, "create aencoder failed.");
             e.printStackTrace();
@@ -134,8 +135,8 @@ public class SrsEncoder {
         // setup the aencoder.
         // @see https://developer.android.com/reference/android/media/MediaCodec.html
         int ach = aChannelConfig == AudioFormat.CHANNEL_IN_STEREO ? 2 : 1;
-        MediaFormat audioFormat = MediaFormat.createAudioFormat(ACODEC, ASAMPLERATE, ach);
-        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, ABITRATE);
+        MediaFormat audioFormat = MediaFormat.createAudioFormat(aCodec, aSampleRate, ach);
+        audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, aBitrate);
         audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 0);
         aencoder.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         // add the audio tracker to muxer.
@@ -154,12 +155,12 @@ public class SrsEncoder {
 
         // setup the vencoder.
         // Note: landscape to portrait, 90 degree rotation, so we need to switch width and height in configuration
-        MediaFormat videoFormat = MediaFormat.createVideoFormat(VCODEC, vOutWidth, vOutHeight);
+        MediaFormat videoFormat = MediaFormat.createVideoFormat(vCodec, vOutWidth, vOutHeight);
         videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, mVideoColorFormat);
         videoFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 0);
         videoFormat.setInteger(MediaFormat.KEY_BIT_RATE, vBitrate);
-        videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, VFPS);
-        videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, VGOP / VFPS);
+        videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, vFPS);
+        videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, vGOP);
         vencoder.configure(videoFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         // add the video tracker to muxer.
         videoFlvTrack = flvMuxer.addTrack(videoFormat);
@@ -234,11 +235,6 @@ public class SrsEncoder {
         return canHardEncode() || canSoftEncode();
     }
 
-    public void setPreviewResolution(int width, int height) {
-        vPrevWidth = width;
-        vPrevHeight = height;
-    }
-
     public void setPortraitResolution(int width, int height) {
         vOutWidth = width;
         vOutHeight = height;
@@ -257,22 +253,25 @@ public class SrsEncoder {
         vPortraitHeight = width;
     }
 
+    public void setVideoFullHDMode() {
+        vBitrate = SrsLiveConfig.FULL_HIGH_DEFINITION_BITRATE;
+        aBitrate = SrsLiveConfig.APE_FLAC_BITRATE;
+        vFPS = SrsLiveConfig.HIGH_FPS;
+        x264Preset = SrsLiveConfig.XH264_VERY_FAST_PRESET;
+    }
+
     public void setVideoHDMode() {
-        vBitrate = 1200 * 1024;  // 1200 kbps
-        x264Preset = "veryfast";
+        vBitrate = SrsLiveConfig.HIGH_DEFINITION_BITRATE;
+        aBitrate = SrsLiveConfig.HIGH_QUALITY_BITRATE;
+        vFPS = SrsLiveConfig.NORMAL_FPS;
+        x264Preset = SrsLiveConfig.XH264_VERY_FAST_PRESET;
     }
 
     public void setVideoSmoothMode() {
-        vBitrate = 500 * 1024;  // 500 kbps
-        x264Preset = "superfast";
-    }
-
-    public int getPreviewWidth() {
-        return vPrevWidth;
-    }
-
-    public int getPreviewHeight() {
-        return vPrevHeight;
+        vBitrate = SrsLiveConfig.STANDARD_DEFINITION_BITRATE;
+        aBitrate = SrsLiveConfig.NORMAL_QUALITY_BITRATE;
+        vFPS = SrsLiveConfig.POOR_FPS;
+        x264Preset = SrsLiveConfig.XH264_SUPER_FAST_PRESET;
     }
 
     public int getOutputWidth() {
@@ -296,7 +295,7 @@ public class SrsEncoder {
         // Since Y component is quadruple size as U and V component, the stride must be set as 32x
         if (!useSoftEncoder && (vOutWidth % 32 != 0 || vOutHeight % 32 != 0)) {
             if (vmci.getName().contains("MTK")) {
-                //throw new AssertionError("MTK encoding revolution stride must be 32x");
+                throw new AssertionError("MTK encoding revolution stride must be 32x");
             }
         }
 
@@ -354,7 +353,7 @@ public class SrsEncoder {
         // Check video frame cache number to judge the networking situation.
         // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
-        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < VGOP) {
+        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             ByteBuffer[] inBuffers = aencoder.getInputBuffers();
             ByteBuffer[] outBuffers = aencoder.getOutputBuffers();
 
@@ -385,7 +384,7 @@ public class SrsEncoder {
         // Check video frame cache number to judge the networking situation.
         // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
-        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < VGOP) {
+        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             long pts = System.nanoTime() / 1000 - mPresentTimeUs;
             if (useSoftEncoder) {
                 swRgbaFrame(data, width, height, pts);
@@ -412,7 +411,7 @@ public class SrsEncoder {
         // Check video frame cache number to judge the networking situation.
         // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
-        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < VGOP) {
+        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             long pts = System.nanoTime() / 1000 - mPresentTimeUs;
 
             onProcessedYuvFrame(data, pts);
@@ -431,7 +430,7 @@ public class SrsEncoder {
         // Check video frame cache number to judge the networking situation.
         // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
-        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < VGOP) {
+        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             long pts = System.nanoTime() / 1000 - mPresentTimeUs;
             if (useSoftEncoder) {
                 throw new UnsupportedOperationException("Not implemented");
@@ -459,7 +458,7 @@ public class SrsEncoder {
         // Check video frame cache number to judge the networking situation.
         // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
-        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < VGOP) {
+        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             long pts = System.nanoTime() / 1000 - mPresentTimeUs;
             if (useSoftEncoder) {
                 throw new UnsupportedOperationException("Not implemented");
@@ -487,7 +486,7 @@ public class SrsEncoder {
         // Check video frame cache number to judge the networking situation.
         // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
-        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < VGOP) {
+        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             long pts = System.nanoTime() / 1000 - mPresentTimeUs;
             if (useSoftEncoder) {
                 throw new UnsupportedOperationException("Not implemented");
@@ -560,10 +559,10 @@ public class SrsEncoder {
     }
 
     public AudioRecord chooseAudioRecord() {
-        AudioRecord mic = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, SrsEncoder.ASAMPLERATE,
+        AudioRecord mic = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, SrsEncoder.aSampleRate,
                 AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, getPcmBufferSize() * 4);
         if (mic.getState() != AudioRecord.STATE_INITIALIZED) {
-            mic = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, SrsEncoder.ASAMPLERATE,
+            mic = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, SrsEncoder.aSampleRate,
                     AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, getPcmBufferSize() * 4);
             if (mic.getState() != AudioRecord.STATE_INITIALIZED) {
                 mic = null;
@@ -578,7 +577,7 @@ public class SrsEncoder {
     }
 
     private int getPcmBufferSize() {
-        int pcmBufSize = AudioRecord.getMinBufferSize(ASAMPLERATE, AudioFormat.CHANNEL_IN_STEREO,
+        int pcmBufSize = AudioRecord.getMinBufferSize(aSampleRate, AudioFormat.CHANNEL_IN_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT) + 8191;
         return pcmBufSize - (pcmBufSize % 8192);
     }
@@ -594,7 +593,7 @@ public class SrsEncoder {
 
             String[] types = mci.getSupportedTypes();
             for (int j = 0; j < types.length; j++) {
-                if (types[j].equalsIgnoreCase(VCODEC)) {
+                if (types[j].equalsIgnoreCase(vCodec)) {
                     if (DEBUG)
                         Log.i(TAG, String.format("vencoder %s types: %s", mci.getName(), types[j]));
                     if (name == null) {
@@ -622,7 +621,7 @@ public class SrsEncoder {
         //vmci = chooseVideoEncoder("qcom");
 
         int matchedColorFormat = 0;
-        MediaCodecInfo.CodecCapabilities cc = vmci.getCapabilitiesForType(VCODEC);
+        MediaCodecInfo.CodecCapabilities cc = vmci.getCapabilitiesForType(vCodec);
         for (int i = 0; i < cc.colorFormats.length; i++) {
             int cf = cc.colorFormats[i];
             if (DEBUG)
@@ -648,6 +647,39 @@ public class SrsEncoder {
         return matchedColorFormat;
     }
 
+    // the color transform, @see http://stackoverflow.com/questions/15739684/mediacodec-and-camera-color-space-incorrect
+    private static byte[] YV12toYUV420PackedSemiPlanar(final byte[] input, final byte[] output, final int width, final int height) {
+        /*
+         * COLOR_TI_FormatYUV420PackedSemiPlanar is NV12
+         * We convert by putting the corresponding U and V bytes together (interleaved).
+         */
+        final int frameSize = width * height;
+        final int qFrameSize = frameSize / 4;
+
+        System.arraycopy(input, 0, output, 0, frameSize); // Y
+
+        for (int i = 0; i < qFrameSize; i++) {
+            output[frameSize + i * 2] = input[frameSize + i + qFrameSize]; // Cb (U)
+            output[frameSize + i * 2 + 1] = input[frameSize + i]; // Cr (V)
+        }
+        return output;
+    }
+
+    private static byte[] YV12toYUV420Planar(byte[] input, byte[] output, int width, int height) {
+        /*
+         * COLOR_FormatYUV420Planar is I420 which is like YV12, but with U and V reversed.
+         * So we just have to reverse U and V.
+         */
+        final int frameSize = width * height;
+        final int qFrameSize = frameSize / 4;
+
+        System.arraycopy(input, 0, output, 0, frameSize); // Y
+        System.arraycopy(input, frameSize, output, frameSize + qFrameSize, qFrameSize); // Cr (V)
+        System.arraycopy(input, frameSize + qFrameSize, output, frameSize, qFrameSize); // Cb (U)
+
+        return output;
+    }
+
     private native void setEncoderResolution(int outWidth, int outHeight);
 
     private native void setEncoderFps(int fps);
@@ -658,23 +690,36 @@ public class SrsEncoder {
 
     private native void setEncoderPreset(String preset);
 
-    private native byte[] RGBAToI420(byte[] rgbaFrame, int width, int height, boolean flip, int rotate);
+    private native byte[] RGBAToI420(byte[] rgbaFrame, int width, int height, boolean flip,
+                                     int rotate);
 
-    private native byte[] RGBAToNV12(byte[] rgbaFrame, int width, int height, boolean flip, int rotate);
+    private native byte[] RGBAToNV12(byte[] rgbaFrame, int width, int height, boolean flip,
+                                     int rotate);
 
-    private native byte[] ARGBToI420Scaled(int[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width, int crop_height);
+    private native byte[] ARGBToI420Scaled(int[] frame, int src_width, int src_height,
+                                           boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width,
+                                           int crop_height);
 
-    private native byte[] ARGBToNV12Scaled(int[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width, int crop_height);
+    private native byte[] ARGBToNV12Scaled(int[] frame, int src_width, int src_height,
+                                           boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width,
+                                           int crop_height);
 
-    private native byte[] ARGBToI420(int[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree);
+    private native byte[] ARGBToI420(int[] frame, int src_width, int src_height,
+                                     boolean need_flip, int rotate_degree);
 
-    private native byte[] ARGBToNV12(int[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree);
+    private native byte[] ARGBToNV12(int[] frame, int src_width, int src_height,
+                                     boolean need_flip, int rotate_degree);
 
-    private native byte[] NV21ToNV12Scaled(byte[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width, int crop_height);
+    private native byte[] NV21ToNV12Scaled(byte[] frame, int src_width, int src_height,
+                                           boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width,
+                                           int crop_height);
 
-    private native byte[] NV21ToI420Scaled(byte[] frame, int src_width, int src_height, boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width, int crop_height);
+    private native byte[] NV21ToI420Scaled(byte[] frame, int src_width, int src_height,
+                                           boolean need_flip, int rotate_degree, int crop_x, int crop_y, int crop_width,
+                                           int crop_height);
 
-    private native int RGBASoftEncode(byte[] rgbaFrame, int width, int height, boolean flip, int rotate, long pts);
+    private native int RGBASoftEncode(byte[] rgbaFrame, int width, int height, boolean flip,
+                                      int rotate, long pts);
 
     private native boolean openSoftEncoder();
 

@@ -7,7 +7,6 @@ import android.widget.Button;
 
 import com.bajie.uvccamera.rtmplive.R;
 import com.bajie.uvccamera.rtmplive.base.BaseActivity;
-import com.bajie.uvccamera.rtmplive.config.LiveConfig;
 import com.bajie.uvccamera.rtmplive.util.ToastUtils;
 import com.github.faucamp.simplertmp.RtmpHandler;
 import com.orhanobut.logger.Logger;
@@ -15,6 +14,7 @@ import com.seu.magicfilter.utils.MagicFilterType;
 
 import net.ossrs.yasea.SrsCameraView;
 import net.ossrs.yasea.SrsEncodeHandler;
+import net.ossrs.yasea.SrsLiveConfig;
 import net.ossrs.yasea.SrsPublisher;
 import net.ossrs.yasea.SrsRecordHandler;
 
@@ -27,11 +27,17 @@ import java.net.SocketException;
  * Created by YoungWu on 2019/7/8.
  */
 public class InternalCameraLiveActivity extends BaseActivity implements View.OnClickListener {
+    /**
+     * 测试推流地址
+     */
+    public static final String TEST_URL = "rtmp://119.29.184.33:1935/live/livestream_863134036763822";
     private SrsCameraView srsCameraView;
     private Button btn_start;
+    private Button btn_back_camera;
 
     private SrsPublisher publisher;
     private boolean isLive = false;
+    private boolean isBack = false;
 
     @Override
     public int getLayout() {
@@ -42,6 +48,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
     public void initView(Object obj) {
         srsCameraView = findViewById(R.id.srsCameraView);
         btn_start = findViewById(R.id.btn_start);
+        btn_back_camera = findViewById(R.id.btn_back_camera);
     }
 
     @Override
@@ -60,30 +67,46 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         publisher.setEncodeHandler(new SrsEncodeHandler(srsEncodeListener));
         publisher.setRecordHandler(new SrsRecordHandler(srsRecordListener));
         publisher.setRtmpHandler(new RtmpHandler(rtmpListener));
-        publisher.setPreviewResolution(LiveConfig.HIGH_DEFINITION_WIDTH, LiveConfig.HIGH_DEFINITION_HEIGHT);
-        publisher.setOutputResolution(LiveConfig.HIGH_DEFINITION_WIDTH, LiveConfig.HIGH_DEFINITION_HEIGHT);
+        publisher.setPreviewResolution(SrsLiveConfig.HIGH_DEFINITION_WIDTH, SrsLiveConfig.HIGH_DEFINITION_HEIGHT);
+        publisher.setOutputResolution(SrsLiveConfig.HIGH_DEFINITION_WIDTH, SrsLiveConfig.HIGH_DEFINITION_HEIGHT);
         publisher.setScreenOrientation(Configuration.ORIENTATION_PORTRAIT);
         publisher.switchCameraFilter(MagicFilterType.NONE);
         publisher.setVideoHDMode();
         publisher.switchToHardEncoder();
-        publisher.switchCameraFace(0);
     }
 
     @Override
     public void setListener() {
         super.setListener();
         btn_start.setOnClickListener(this);
+        btn_back_camera.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_start:
-                //开始或结束
+                //开始或结束直播
                 if (isLive) {
+                    btn_start.setText("开始");
+                    isLive = false;
                     stopLive();
                 } else {
+                    btn_start.setText("结束");
+                    isLive = true;
                     startLive();
+                }
+                break;
+            case R.id.btn_back_camera:
+                //切换前置或后置摄像头
+                if (isBack) {
+                    btn_back_camera.setText("后置");
+                    isBack = false;
+                    switchFrontCamera();
+                } else {
+                    btn_back_camera.setText("前置");
+                    isBack = true;
+                    switchBackCamera();
                 }
                 break;
         }
@@ -93,20 +116,28 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
      * 开始直播
      */
     private void startLive() {
-        if (!isLive) {
-            isLive = true;
-            publisher.startPublish(LiveConfig.TEST_URL);
-        }
+        publisher.startPublish(TEST_URL);
     }
 
     /**
      * 结束直播
      */
     private void stopLive() {
-        if (isLive) {
-            isLive = false;
-            publisher.stopPublish();
-        }
+        publisher.stopPublish();
+    }
+
+    /**
+     * 切换前置摄像头
+     */
+    private void switchFrontCamera() {
+        publisher.switchCameraFace(1);
+    }
+
+    /**
+     * 切换后置摄像头
+     */
+    private void switchBackCamera() {
+        publisher.switchCameraFace(0);
     }
 
     private SrsEncodeHandler.SrsEncodeListener srsEncodeListener = new SrsEncodeHandler.SrsEncodeListener() {

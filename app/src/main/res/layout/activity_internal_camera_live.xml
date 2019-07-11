@@ -9,6 +9,17 @@
         android:layout_height="match_parent"/>
 
     <Button
+        android:id="@+id/btn_back_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="60dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="100dp"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp"
+        android:text="后置"
+        android:textSize="20sp"/>
+
+    <Button
         android:id="@+id/btn_start"
         android:layout_width="wrap_content"
         android:layout_height="60dp"

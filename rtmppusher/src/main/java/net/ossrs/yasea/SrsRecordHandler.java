@@ -79,7 +79,7 @@ public class SrsRecordHandler extends Handler {
                 throw new RuntimeException("unknown msg " + msg.what);
         }
     }
-    
+
     public interface SrsRecordListener {
 
         void onRecordPause();

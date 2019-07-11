@@ -43,13 +43,15 @@ public class SrsPublisher {
         });
     }
 
+    /**
+     * Calculate sampling FPS
+     */
     private void calcSamplingFps() {
-        // Calculate sampling FPS
         if (videoFrameCount == 0) {
             lastTimeMillis = System.nanoTime() / 1000000;
             videoFrameCount++;
         } else {
-            if (++videoFrameCount >= SrsEncoder.VGOP) {
+            if (++videoFrameCount >= SrsEncoder.vGOP) {
                 long diffTimeMillis = System.nanoTime() / 1000000 - lastTimeMillis;
                 mSamplingFps = (double) videoFrameCount * 1000 / diffTimeMillis;
                 videoFrameCount = 0;
@@ -63,6 +65,14 @@ public class SrsPublisher {
 
     public void stopCamera() {
         mCameraView.stopCamera();
+    }
+
+    public void startTorch() {
+        mCameraView.startTorch();
+    }
+
+    public void stopTorch() {
+        mCameraView.stopTorch();
     }
 
     public void startAudio() {
@@ -242,14 +252,6 @@ public class SrsPublisher {
         return mEncoder.isSoftEncoder();
     }
 
-    public int getPreviewWidth() {
-        return mEncoder.getPreviewWidth();
-    }
-
-    public int getPreviewHeight() {
-        return mEncoder.getPreviewHeight();
-    }
-
     public double getmSamplingFps() {
         return mSamplingFps;
     }
@@ -263,8 +265,7 @@ public class SrsPublisher {
     }
 
     public void setPreviewResolution(int width, int height) {
-        int resolution[] = mCameraView.setPreviewResolution(width, height);
-        mEncoder.setPreviewResolution(resolution[0], resolution[1]);
+        mCameraView.setPreviewResolution(width, height);
     }
 
     public void setOutputResolution(int width, int height) {
@@ -278,6 +279,10 @@ public class SrsPublisher {
     public void setScreenOrientation(int orientation) {
         mCameraView.setPreviewOrientation(orientation);
         mEncoder.setScreenOrientation(orientation);
+    }
+
+    public void setVideoFullHDMode() {
+        mEncoder.setVideoFullHDMode();
     }
 
     public void setVideoHDMode() {
@@ -304,8 +309,8 @@ public class SrsPublisher {
         sendAudioOnly = flag;
     }
 
-    public boolean switchCameraFilter(MagicFilterType type) {
-        return mCameraView.setFilter(type);
+    public void switchCameraFilter(MagicFilterType type) {
+        mCameraView.setFilter(type);
     }
 
     public void switchCameraFace(int id) {
@@ -315,6 +320,10 @@ public class SrsPublisher {
             mCameraView.enableEncoding();
         }
         mCameraView.startCamera();
+    }
+
+    public void deleteTextures() {
+        mCameraView.deleteTextures();
     }
 
     public void setRtmpHandler(RtmpHandler handler) {

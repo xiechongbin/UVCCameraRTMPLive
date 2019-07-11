@@ -79,7 +79,7 @@ public class SrsFlvMuxer {
      * @return The track index for this newly added track.
      */
     public int addTrack(MediaFormat format) {
-        if (format.getString(MediaFormat.KEY_MIME).contentEquals(SrsEncoder.VCODEC)) {
+        if (format.getString(MediaFormat.KEY_MIME).contentEquals(SrsEncoder.vCodec)) {
             flv.setVideoTrack(format);
             return VIDEO_TRACK;
         } else {
@@ -144,19 +144,21 @@ public class SrsFlvMuxer {
                 while (!Thread.interrupted()) {
                     while (!mFlvTagCache.isEmpty()) {
                         SrsFlvFrame frame = mFlvTagCache.poll();
-                        if (frame.isSequenceHeader()) {
-                            if (frame.isVideo()) {
-                                mVideoSequenceHeader = frame;
-                                sendFlvTag(mVideoSequenceHeader);
-                            } else if (frame.isAudio()) {
-                                mAudioSequenceHeader = frame;
-                                sendFlvTag(mAudioSequenceHeader);
-                            }
-                        } else {
-                            if (frame.isVideo() && mVideoSequenceHeader != null) {
-                                sendFlvTag(frame);
-                            } else if (frame.isAudio() && mAudioSequenceHeader != null) {
-                                sendFlvTag(frame);
+                        if (frame != null) {
+                            if (frame.isSequenceHeader()) {
+                                if (frame.isVideo()) {
+                                    mVideoSequenceHeader = frame;
+                                    sendFlvTag(mVideoSequenceHeader);
+                                } else if (frame.isAudio()) {
+                                    mAudioSequenceHeader = frame;
+                                    sendFlvTag(mAudioSequenceHeader);
+                                }
+                            } else {
+                                if (frame.isVideo() && mVideoSequenceHeader != null) {
+                                    sendFlvTag(frame);
+                                } else if (frame.isAudio() && mAudioSequenceHeader != null) {
+                                    sendFlvTag(frame);
+                                }
                             }
                         }
                     }
@@ -884,7 +886,6 @@ public class SrsFlvMuxer {
                     frame.data.get(sps);
                     h264_sps_changed = true;
                     h264_sps = ByteBuffer.wrap(sps);
-//                    writeH264SpsPps(dts, pts);
                 }
 
                 SrsFlvFrameBytes frame_sei = avc.demuxAnnexb(bb, bi, false);
@@ -908,7 +909,6 @@ public class SrsFlvMuxer {
             ipbs.add(avc.muxNaluHeader(frame));
             ipbs.add(frame);
 
-            //writeH264SpsPps(dts, pts);
             writeH264IpbFrame(ipbs, type, dts, pts);
             ipbs.clear();
         }

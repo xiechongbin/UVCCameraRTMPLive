@@ -31,7 +31,7 @@ public class SrsEncodeHandler extends Handler {
     public void notifyEncodeIllegalArgumentException(IllegalArgumentException e) {
         obtainMessage(MSG_ENCODE_ILLEGAL_ARGUMENT_EXCEPTION, e).sendToTarget();
     }
-    
+
     @Override  // runs on UI thread
     public void handleMessage(Message msg) {
         SrsEncodeListener listener = mWeakListener.get();

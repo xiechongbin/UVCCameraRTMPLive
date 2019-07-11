@@ -1,7 +1,6 @@
 package com.bajie.uvccamera.rtmplive.activity;
 
 import android.content.Intent;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
@@ -27,12 +26,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             Permission.CAMERA, Permission.RECORD_AUDIO};
 
     private Button btn_internal_camera_live, btn_external_camera_live;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-    }
 
     @Override
     public int getLayout() {

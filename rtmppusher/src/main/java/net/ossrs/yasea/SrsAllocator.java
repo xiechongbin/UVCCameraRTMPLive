@@ -67,7 +67,7 @@ public final class SrsAllocator {
      * @param individualAllocationSize The length of each individual {@link Allocation}.
      */
     public SrsAllocator(int individualAllocationSize) {
-      this(individualAllocationSize, 0);
+        this(individualAllocationSize, 0);
     }
 
     /**
@@ -75,7 +75,7 @@ public final class SrsAllocator {
      * <p>
      *
      * @param individualAllocationSize The length of each individual {@link Allocation}.
-     * @param initialAllocationCount The number of allocations to create up front.
+     * @param initialAllocationCount   The number of allocations to create up front.
      */
     public SrsAllocator(int individualAllocationSize, int initialAllocationCount) {
         this.individualAllocationSize = individualAllocationSize;

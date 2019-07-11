@@ -34,13 +34,15 @@ public class SrsUvcPublisher {
         }
     }
 
+    /**
+     * Calculate sampling FPS
+     */
     private void calcSamplingFps() {
-        // Calculate sampling FPS
         if (videoFrameCount == 0) {
             lastTimeMillis = System.nanoTime() / 1000000;
             videoFrameCount++;
         } else {
-            if (++videoFrameCount >= SrsEncoder.VGOP) {
+            if (++videoFrameCount >= SrsEncoder.vGOP) {
                 long diffTimeMillis = System.nanoTime() / 1000000 - lastTimeMillis;
                 mSamplingFps = (double) videoFrameCount * 1000 / diffTimeMillis;
                 videoFrameCount = 0;
@@ -125,11 +127,23 @@ public class SrsUvcPublisher {
         }
     }
 
-    public void startEncode() {
-        mEncoder.start();
+    private void startEncode() {
+        if (!mEncoder.start()) {
+            return;
+        }
+        startAudio();
     }
 
-    public void stopEncode() {
+    private void resumeEncode() {
+        startAudio();
+    }
+
+    private void pauseEncode() {
+        stopAudio();
+    }
+
+    private void stopEncode() {
+        stopAudio();
         mEncoder.stop();
     }
 
@@ -144,6 +158,14 @@ public class SrsUvcPublisher {
     public void resumePublish() {
         if (mFlvMuxer != null) {
             mEncoder.resume();
+            resumeEncode();
+        }
+    }
+
+    public void pausePublish() {
+        if (mFlvMuxer != null) {
+            mEncoder.pause();
+            pauseEncode();
         }
     }
 
@@ -154,19 +176,13 @@ public class SrsUvcPublisher {
         }
     }
 
-    public void pausePublish() {
-        if (mFlvMuxer != null) {
-            mEncoder.pause();
-        }
-    }
-
     public boolean startRecord(String recPath) {
         return mMp4Muxer != null && mMp4Muxer.record(new File(recPath));
     }
 
-    public void stopRecord() {
+    public void resumeRecord() {
         if (mMp4Muxer != null) {
-            mMp4Muxer.stop();
+            mMp4Muxer.resume();
         }
     }
 
@@ -176,9 +192,9 @@ public class SrsUvcPublisher {
         }
     }
 
-    public void resumeRecord() {
+    public void stopRecord() {
         if (mMp4Muxer != null) {
-            mMp4Muxer.resume();
+            mMp4Muxer.stop();
         }
     }
 
@@ -205,20 +221,8 @@ public class SrsUvcPublisher {
         return mEncoder.isSoftEncoder();
     }
 
-    public int getPreviewWidth() {
-        return mEncoder.getPreviewWidth();
-    }
-
-    public int getPreviewHeight() {
-        return mEncoder.getPreviewHeight();
-    }
-
     public double getmSamplingFps() {
         return mSamplingFps;
-    }
-
-    public void setPreviewResolution(int width, int height) {
-        mEncoder.setPreviewResolution(width, height);
     }
 
     public void setOutputResolution(int width, int height) {
@@ -231,6 +235,10 @@ public class SrsUvcPublisher {
 
     public void setScreenOrientation(int orientation) {
         mEncoder.setScreenOrientation(orientation);
+    }
+
+    public void setVideoFullHDMode() {
+        mEncoder.setVideoFullHDMode();
     }
 
     public void setVideoHDMode() {
