@@ -41,10 +41,10 @@
         </activity>
         <activity
             android:name=".activity.InternalCameraLiveActivity"
-            android:screenOrientation="portrait"/>
+            android:configChanges="screenSize|screenLayout|orientation"/>
         <activity
             android:name=".activity.ExternalCameraLiveActivity"
-            android:screenOrientation="portrait"/>
+            android:configChanges="screenSize|screenLayout|orientation"/>
     </application>
 
 </manifest>

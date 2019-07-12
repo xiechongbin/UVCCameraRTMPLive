@@ -23,6 +23,10 @@ public class SrsLiveConfig {
      * xh264编码方案，超级快
      */
     public static final String XH264_SUPER_FAST_PRESET = "superfast";
+    /**
+     * xh264编码方案，极快
+     */
+    public static final String XH264_ULTRA_FAST_PRESET = "ultrafast";
 
     /**
      * 标清分辨率宽度
@@ -50,9 +54,9 @@ public class SrsLiveConfig {
     public static final int FULL_HIGH_DEFINITION_HEIGHT = 1080;
 
     /**
-     * 标清视频比特率1Mbps
+     * 标清视频比特率2Mbps
      */
-    public static final int STANDARD_DEFINITION_BITRATE = 1024 * 1024;
+    public static final int STANDARD_DEFINITION_BITRATE = 2 * 1024 * 1024;
     /**
      * 高清视频采比特率4Mbps
      */

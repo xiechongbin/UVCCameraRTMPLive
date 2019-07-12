@@ -100,7 +100,7 @@ public class SrsEncoder {
         // Since Y component is quadruple size as U and V component, the stride must be set as 32x
         if (!useSoftEncoder && (vOutWidth % 32 != 0 || vOutHeight % 32 != 0)) {
             if (vmci.getName().contains("MTK")) {
-                throw new AssertionError("MTK encoding revolution stride must be 32x");
+//                throw new AssertionError("MTK encoding revolution stride must be 32x");
             }
         }
 
@@ -257,7 +257,7 @@ public class SrsEncoder {
         vBitrate = SrsLiveConfig.FULL_HIGH_DEFINITION_BITRATE;
         aBitrate = SrsLiveConfig.APE_FLAC_BITRATE;
         vFPS = SrsLiveConfig.HIGH_FPS;
-        x264Preset = SrsLiveConfig.XH264_VERY_FAST_PRESET;
+        x264Preset = SrsLiveConfig.XH264_ULTRA_FAST_PRESET;
     }
 
     public void setVideoHDMode() {
@@ -295,7 +295,7 @@ public class SrsEncoder {
         // Since Y component is quadruple size as U and V component, the stride must be set as 32x
         if (!useSoftEncoder && (vOutWidth % 32 != 0 || vOutHeight % 32 != 0)) {
             if (vmci.getName().contains("MTK")) {
-                throw new AssertionError("MTK encoding revolution stride must be 32x");
+//                throw new AssertionError("MTK encoding revolution stride must be 32x");
             }
         }
 

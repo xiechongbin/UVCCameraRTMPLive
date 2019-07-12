@@ -68,7 +68,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         publisher.setRecordHandler(new SrsRecordHandler(srsRecordListener));
         publisher.setRtmpHandler(new RtmpHandler(rtmpListener));
         publisher.setPreviewResolution(SrsLiveConfig.HIGH_DEFINITION_WIDTH, SrsLiveConfig.HIGH_DEFINITION_HEIGHT);
-        publisher.setOutputResolution(SrsLiveConfig.HIGH_DEFINITION_WIDTH, SrsLiveConfig.HIGH_DEFINITION_HEIGHT);
+        publisher.setOutputResolution(SrsLiveConfig.HIGH_DEFINITION_HEIGHT, SrsLiveConfig.HIGH_DEFINITION_WIDTH);
         publisher.setScreenOrientation(Configuration.ORIENTATION_PORTRAIT);
         publisher.switchCameraFilter(MagicFilterType.NONE);
         publisher.setVideoHDMode();
@@ -140,6 +140,31 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         publisher.switchCameraFace(0);
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        stopLive();
+        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            publisher.setOutputResolution(SrsLiveConfig.HIGH_DEFINITION_HEIGHT, SrsLiveConfig.HIGH_DEFINITION_WIDTH);
+            publisher.setScreenOrientation(Configuration.ORIENTATION_PORTRAIT);
+        } else if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            publisher.setOutputResolution(SrsLiveConfig.HIGH_DEFINITION_WIDTH, SrsLiveConfig.HIGH_DEFINITION_HEIGHT);
+            publisher.setScreenOrientation(Configuration.ORIENTATION_LANDSCAPE);
+        }
+        btn_start.setText("结束");
+        isLive = true;
+        startLive();
+    }
+
+    /**
+     * 处理异常情况
+     */
+    private void handleException() {
+        btn_start.setText("开始");
+        isLive = false;
+        stopLive();
+    }
+
     private SrsEncodeHandler.SrsEncodeListener srsEncodeListener = new SrsEncodeHandler.SrsEncodeListener() {
         @Override
         public void onNetworkWeak() {
@@ -157,6 +182,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         public void onEncodeIllegalArgumentException(IllegalArgumentException e) {
             Logger.e(e, "onEncodeIllegalArgumentException");
             ToastUtils.toast(InternalCameraLiveActivity.this, "onEncodeIllegalArgumentException");
+            handleException();
         }
     };
 
@@ -193,37 +219,51 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
 
         @Override
         public void onRtmpVideoFpsChanged(double fps) {
-            Logger.e("onRtmpVideoFpsChanged:" + fps);
+            Logger.e("onRtmpVideoFpsChanged:" + fps + "fps");
         }
 
         @Override
         public void onRtmpVideoBitrateChanged(double bitrate) {
-            Logger.e("onRtmpVideoBitrateChanged:" + bitrate);
+            int rate = (int) bitrate / 1000;
+            if (rate > 0) {
+                Logger.e("onRtmpVideoBitrateChanged:" + rate + "kbps");
+            } else {
+                Logger.e("onRtmpVideoBitrateChanged:" + bitrate + "bps");
+            }
         }
 
         @Override
         public void onRtmpAudioBitrateChanged(double bitrate) {
-            Logger.e("onRtmpAudioBitrateChanged:" + bitrate);
+            int rate = (int) bitrate / 1000;
+            if (rate > 0) {
+                Logger.e("onRtmpAudioBitrateChanged:" + rate + "kbps");
+            } else {
+                Logger.e("onRtmpAudioBitrateChanged:" + bitrate + "bps");
+            }
         }
 
         @Override
         public void onRtmpSocketException(SocketException e) {
             Logger.e(e, "onRtmpSocketException");
+            handleException();
         }
 
         @Override
         public void onRtmpIOException(IOException e) {
             Logger.e(e, "onRtmpIOException");
+            handleException();
         }
 
         @Override
         public void onRtmpIllegalArgumentException(IllegalArgumentException e) {
             Logger.e(e, "onRtmpIllegalArgumentException");
+            handleException();
         }
 
         @Override
         public void onRtmpIllegalStateException(IllegalStateException e) {
             Logger.e(e, "onRtmpIllegalStateException");
+            handleException();
         }
     };
 
@@ -251,11 +291,13 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         @Override
         public void onRecordIllegalArgumentException(IllegalArgumentException e) {
             Logger.e(e, "onRecordIllegalArgumentException");
+            handleException();
         }
 
         @Override
         public void onRecordIOException(IOException e) {
             Logger.e(e, "onRecordIOException");
+            handleException();
         }
     };
 
