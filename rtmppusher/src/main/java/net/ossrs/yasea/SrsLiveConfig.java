@@ -62,9 +62,9 @@ public class SrsLiveConfig {
      */
     public static final int HIGH_DEFINITION_BITRATE = 4 * 1024 * 1024;
     /**
-     * 全高清视频比特率8Mbps
+     * 全高清视频比特率6Mbps
      */
-    public static final int FULL_HIGH_DEFINITION_BITRATE = 8 * 1024 * 1024;
+    public static final int FULL_HIGH_DEFINITION_BITRATE = 6 * 1024 * 1024;
 
     /**
      * 普通音频比特率128kbps
