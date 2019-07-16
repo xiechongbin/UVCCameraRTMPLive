@@ -270,10 +270,10 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
                 while (!Thread.interrupted()) {
                     while (!mGLIntBufferCache.isEmpty()) {
                         IntBuffer picture = mGLIntBufferCache.poll();
-                        if (picture != null) {
+                        if (picture != null && mGLPreviewBuffer != null && mPrevCb != null) {
                             mGLPreviewBuffer.asIntBuffer().put(picture.array());
+                            mPrevCb.onGetRgbaFrame(mGLPreviewBuffer.array(), mPreviewWidth, mPreviewHeight);
                         }
-                        mPrevCb.onGetRgbaFrame(mGLPreviewBuffer.array(), mPreviewWidth, mPreviewHeight);
                     }
                     // Waiting for next frame
                     synchronized (writeLock) {
@@ -294,7 +294,9 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
     public void disableEncoding() {
         mIsEncoding = false;
         mGLIntBufferCache.clear();
-        mGLPreviewBuffer.clear();
+        if (mGLPreviewBuffer != null) {
+            mGLPreviewBuffer.clear();
+        }
 
         if (worker != null) {
             worker.interrupt();
