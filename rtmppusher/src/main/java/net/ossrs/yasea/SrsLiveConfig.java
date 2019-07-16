@@ -102,7 +102,7 @@ public class SrsLiveConfig {
      */
     public static final int AUDIO_SAMPLERATE = 44100;
 
-    /* **************************下面是OPPO FIND X摄像头支持预览尺寸*****************************
+    /* **************************下面是OPPO FIND X摄像头支持的预览尺寸*****************************
      * width:height=2340:1080
      * width:height=2304:1728
      * width:height=2304:1296

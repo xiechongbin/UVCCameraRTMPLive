@@ -98,8 +98,10 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
         GLES20.glViewport(0, 0, width, height);
         mSurfaceWidth = width;
         mSurfaceHeight = height;
-        magicFilter.onDisplaySizeChanged(width, height);
-        magicFilter.onInputSizeChanged(mPreviewWidth, mPreviewHeight);
+        if (magicFilter != null) {
+            magicFilter.onDisplaySizeChanged(width, height);
+            magicFilter.onInputSizeChanged(mPreviewWidth, mPreviewHeight);
+        }
 
         float mOutputAspectRatio = width > height ? (float) width / height : (float) height / width;
         float aspectRatio = mOutputAspectRatio / mInputAspectRatio;
@@ -119,13 +121,15 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
 
         surfaceTexture.getTransformMatrix(mSurfaceMatrix);
         Matrix.multiplyMM(mTransformMatrix, 0, mSurfaceMatrix, 0, mProjectionMatrix, 0);
-        magicFilter.setTextureTransformMatrix(mTransformMatrix);
-        magicFilter.onDrawFrame(mOESTextureId);
+        if (magicFilter != null) {
+            magicFilter.setTextureTransformMatrix(mTransformMatrix);
+            magicFilter.onDrawFrame(mOESTextureId);
 
-        if (mIsEncoding) {
-            mGLIntBufferCache.add(magicFilter.getGLFboBuffer());
-            synchronized (writeLock) {
-                writeLock.notifyAll();
+            if (mIsEncoding) {
+                mGLIntBufferCache.add(magicFilter.getGLFboBuffer());
+                synchronized (writeLock) {
+                    writeLock.notifyAll();
+                }
             }
         }
     }

@@ -46,6 +46,7 @@ dependencies {
     implementation 'com.android.support:multidex:1.0.3'
     implementation 'com.hjq:xxpermissions:5.5'
     implementation 'com.orhanobut:logger:2.2.0'
+    implementation 'com.zhy:base-rvadapter:3.0.3'
     implementation project(':rtmppusher')
     implementation project(':uvccamera')
 }
