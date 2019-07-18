@@ -17,7 +17,7 @@ public class MagicLomoFilter extends GPUImageFilter {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         GLES20.glDeleteTextures(inputTextureHandles.length, inputTextureHandles, 0);
         for (int i = 0; i < inputTextureHandles.length; i++)
@@ -45,21 +45,20 @@ public class MagicLomoFilter extends GPUImageFilter {
     }
 
     @Override
-    protected void onInit() {
+    public void onInit() {
         super.onInit();
-        for (int i = 0; i < inputTextureUniformLocations.length; i++) {
+        for (int i = 0; i < inputTextureUniformLocations.length; i++)
             inputTextureUniformLocations[i] = GLES20.glGetUniformLocation(getProgram(), "inputImageTexture" + (2 + i));
-        }
         mGLStrengthLocation = GLES20.glGetUniformLocation(getProgram(), "strength");
     }
 
     @Override
-    protected void onInitialized() {
+    public void onInitialized() {
         super.onInitialized();
         setFloat(mGLStrengthLocation, 1.0f);
         runOnDraw(new Runnable() {
             public void run() {
-                inputTextureHandles[0] = OpenGLUtils.loadTexture(getContext(), "filter/vlomomap_new.png");
+                inputTextureHandles[0] = OpenGLUtils.loadTexture(getContext(), "filter/lomomap_new.png");
                 inputTextureHandles[1] = OpenGLUtils.loadTexture(getContext(), "filter/vignette_map.png");
             }
         });

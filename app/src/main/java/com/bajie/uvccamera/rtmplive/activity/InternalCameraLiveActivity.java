@@ -162,7 +162,6 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
     private void initMagicFilterList() {
         List<MagicFilterType> list = new ArrayList<>();
         list.add(MagicFilterType.NONE);
-        list.add(MagicFilterType.FAIRYTALE);
         list.add(MagicFilterType.SUNRISE);
         list.add(MagicFilterType.SUNSET);
         list.add(MagicFilterType.WHITECAT);
@@ -170,7 +169,6 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         list.add(MagicFilterType.SKINWHITEN);
         list.add(MagicFilterType.BEAUTY);
         list.add(MagicFilterType.HEALTHY);
-        list.add(MagicFilterType.SWEETS);
         list.add(MagicFilterType.ROMANCE);
         list.add(MagicFilterType.SAKURA);
         list.add(MagicFilterType.WARM);
@@ -182,19 +180,15 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         list.add(MagicFilterType.COOL);
         list.add(MagicFilterType.EMERALD);
         list.add(MagicFilterType.EVERGREEN);
-        list.add(MagicFilterType.CRAYON);
         list.add(MagicFilterType.SKETCH);
         list.add(MagicFilterType.AMARO);
         list.add(MagicFilterType.BRANNAN);
         list.add(MagicFilterType.BROOKLYN);
         list.add(MagicFilterType.EARLYBIRD);
         list.add(MagicFilterType.FREUD);
-        list.add(MagicFilterType.HEFE);
         list.add(MagicFilterType.HUDSON);
         list.add(MagicFilterType.INKWELL);
         list.add(MagicFilterType.KEVIN);
-        list.add(MagicFilterType.LOCKUP);
-        list.add(MagicFilterType.LOMO);
         list.add(MagicFilterType.N1977);
         list.add(MagicFilterType.NASHVILLE);
         list.add(MagicFilterType.PIXAR);
@@ -205,14 +199,6 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         list.add(MagicFilterType.VALENCIA);
         list.add(MagicFilterType.WALDEN);
         list.add(MagicFilterType.XPROII);
-        //image adjust
-        list.add(MagicFilterType.CONTRAST);
-        list.add(MagicFilterType.BRIGHTNESS);
-        list.add(MagicFilterType.EXPOSURE);
-        list.add(MagicFilterType.HUE);
-        list.add(MagicFilterType.SATURATION);
-        list.add(MagicFilterType.SHARPEN);
-        list.add(MagicFilterType.IMAGE_ADJUST);
 
         CommonAdapter<MagicFilterType> adapter = new CommonAdapter<MagicFilterType>(this, R.layout.layout_magic_filter_item, list) {
             @Override
@@ -525,12 +511,12 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
 
         @Override
         public void onRtmpVideoStreaming() {
-            Logger.e("onRtmpVideoStreaming");
+//            Logger.e("onRtmpVideoStreaming");
         }
 
         @Override
         public void onRtmpAudioStreaming() {
-            Logger.e("onRtmpAudioStreaming");
+//            Logger.e("onRtmpAudioStreaming");
         }
 
         @Override
@@ -545,27 +531,27 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
 
         @Override
         public void onRtmpVideoFpsChanged(double fps) {
-            Logger.e("onRtmpVideoFpsChanged:" + fps + "fps");
+//            Logger.e("onRtmpVideoFpsChanged:" + fps + "fps");
         }
 
         @Override
         public void onRtmpVideoBitrateChanged(double bitrate) {
-            int rate = (int) bitrate / 1000;
-            if (rate > 0) {
-                Logger.e("onRtmpVideoBitrateChanged:" + rate + "kbps");
-            } else {
-                Logger.e("onRtmpVideoBitrateChanged:" + bitrate + "bps");
-            }
+//            int rate = (int) bitrate / 1000;
+//            if (rate > 0) {
+//                Logger.e("onRtmpVideoBitrateChanged:" + rate + "kbps");
+//            } else {
+//                Logger.e("onRtmpVideoBitrateChanged:" + bitrate + "bps");
+//            }
         }
 
         @Override
         public void onRtmpAudioBitrateChanged(double bitrate) {
-            int rate = (int) bitrate / 1000;
-            if (rate > 0) {
-                Logger.e("onRtmpAudioBitrateChanged:" + rate + "kbps");
-            } else {
-                Logger.e("onRtmpAudioBitrateChanged:" + bitrate + "bps");
-            }
+//            int rate = (int) bitrate / 1000;
+//            if (rate > 0) {
+//                Logger.e("onRtmpAudioBitrateChanged:" + rate + "kbps");
+//            } else {
+//                Logger.e("onRtmpAudioBitrateChanged:" + bitrate + "bps");
+//            }
         }
 
         @Override

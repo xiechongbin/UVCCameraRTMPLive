@@ -8,51 +8,59 @@ import com.seu.magicfilter.utils.MagicFilterType;
 import com.seu.magicfilter.utils.OpenGLUtils;
 
 public class MagicLookupFilter extends GPUImageFilter {
+    private int[] inputTextureHandles = {-1, -1};
+    private int[] inputTextureUniformLocations = {-1, -1};
+    private int mGLStrengthLocation;
 
-    protected String table;
-
-    public MagicLookupFilter(String table) {
+    public MagicLookupFilter() {
         super(MagicFilterType.LOCKUP, R.raw.lookup);
-        this.table = table;
     }
 
-    private int mLookupTextureUniform;
-    private int mLookupSourceTexture = OpenGLUtils.NO_TEXTURE;
-
-    protected void onInit() {
-        super.onInit();
-        mLookupTextureUniform = GLES20.glGetUniformLocation(getProgram(), "inputImageTexture2");
-    }
-
-    protected void onInitialized() {
-        super.onInitialized();
-        runOnDraw(new Runnable() {
-            public void run() {
-                mLookupSourceTexture = OpenGLUtils.loadTexture(getContext(), table);
-            }
-        });
-    }
-
-    protected void onDestroy() {
+    @Override
+    public void onDestroy() {
         super.onDestroy();
-        int[] texture = new int[]{mLookupSourceTexture};
-        GLES20.glDeleteTextures(1, texture, 0);
-        mLookupSourceTexture = -1;
+        GLES20.glDeleteTextures(inputTextureHandles.length, inputTextureHandles, 0);
+        for (int i = 0; i < inputTextureHandles.length; i++)
+            inputTextureHandles[i] = -1;
     }
 
+    @Override
     protected void onDrawArraysAfter() {
-        if (mLookupSourceTexture != -1) {
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE3);
+        for (int i = 0; i < inputTextureHandles.length
+                && inputTextureHandles[i] != OpenGLUtils.NO_TEXTURE; i++) {
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + (i + 3));
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         }
     }
 
+    @Override
     protected void onDrawArraysPre() {
-        if (mLookupSourceTexture != -1) {
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE3);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mLookupSourceTexture);
-            GLES20.glUniform1i(mLookupTextureUniform, 3);
+        for (int i = 0; i < inputTextureHandles.length
+                && inputTextureHandles[i] != OpenGLUtils.NO_TEXTURE; i++) {
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + (i + 3));
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, inputTextureHandles[i]);
+            GLES20.glUniform1i(inputTextureUniformLocations[i], (i + 3));
         }
+    }
+
+    @Override
+    public void onInit() {
+        super.onInit();
+        for (int i = 0; i < inputTextureUniformLocations.length; i++)
+            inputTextureUniformLocations[i] = GLES20.glGetUniformLocation(getProgram(), "inputImageTexture" + (2 + i));
+        mGLStrengthLocation = GLES20.glGetUniformLocation(getProgram(), "strength");
+    }
+
+    @Override
+    public void onInitialized() {
+        super.onInitialized();
+        setFloat(mGLStrengthLocation, 1.0f);
+        runOnDraw(new Runnable() {
+            public void run() {
+                inputTextureHandles[0] = OpenGLUtils.loadTexture(getContext(), "filter/lookup_amatorka_02.png");
+                inputTextureHandles[1] = OpenGLUtils.loadTexture(getContext(), "filter/lookup_highkey.png");
+            }
+        });
     }
 }

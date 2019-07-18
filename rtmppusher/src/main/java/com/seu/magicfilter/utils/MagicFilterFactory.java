@@ -94,7 +94,7 @@ public class MagicFilterFactory {
             case KEVIN:
                 return new MagicKevinFilter();
             case LOCKUP:
-                return new MagicLookupFilter("");
+                return new MagicLookupFilter();
             case LOMO:
                 return new MagicLomoFilter();
             case N1977:

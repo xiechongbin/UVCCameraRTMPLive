@@ -62,12 +62,12 @@ public class MagicSweetsFilter extends GPUImageFilter {
         mToneCurveTextureUniformLocation = GLES20.glGetUniformLocation(getProgram(), "curve");
         mMaskGrey1UniformLocation = GLES20.glGetUniformLocation(getProgram(), "grey1Frame");
         mLowPerformanceUniformLocation = GLES20.glGetUniformLocation(getProgram(), "lowPerformance");
-        setInteger(mLowPerformanceUniformLocation, 1);
     }
 
     @Override
     protected void onInitialized() {
         super.onInitialized();
+        setInteger(mLowPerformanceUniformLocation, 1);
         runOnDraw(new Runnable() {
             public void run() {
                 GLES20.glGenTextures(1, mToneCurveTexture, 0);
