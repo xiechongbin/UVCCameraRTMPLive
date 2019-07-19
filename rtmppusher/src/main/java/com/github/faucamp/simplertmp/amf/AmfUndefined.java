@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- *
  * @author leoma
  */
 public class AmfUndefined implements AmfData {
@@ -23,7 +22,7 @@ public class AmfUndefined implements AmfData {
     public void readFrom(InputStream in) throws IOException {
         // Skip data type byte (we assume it's already read)    
     }
-    
+
     public static void writeUndefinedTo(OutputStream out) throws IOException {
         out.write(AmfType.UNDEFINED.getValue());
     }
@@ -31,5 +30,5 @@ public class AmfUndefined implements AmfData {
     @Override
     public int getSize() {
         return 1;
-    }    
+    }
 }

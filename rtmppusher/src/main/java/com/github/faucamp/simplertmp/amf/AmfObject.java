@@ -9,14 +9,16 @@ import java.util.Map;
 
 /**
  * AMF object
- * 
+ *
  * @author francois
  */
 public class AmfObject implements AmfData {
 
     protected Map<String, AmfData> properties = new LinkedHashMap<String, AmfData>();
     protected int size = -1;
-    /** Byte sequence that marks the end of an AMF object */
+    /**
+     * Byte sequence that marks the end of an AMF object
+     */
     protected static final byte[] OBJECT_END_MARKER = new byte[]{0x00, 0x00, 0x09};
 
     public AmfObject() {

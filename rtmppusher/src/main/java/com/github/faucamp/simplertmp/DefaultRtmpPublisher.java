@@ -1,12 +1,12 @@
 package com.github.faucamp.simplertmp;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.github.faucamp.simplertmp.io.RtmpConnection;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Srs implementation of an RTMP publisher
- * 
+ *
  * @author francois, leoma
  */
 public class DefaultRtmpPublisher implements RtmpPublisher {

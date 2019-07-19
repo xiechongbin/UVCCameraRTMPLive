@@ -4,7 +4,7 @@ import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
 
 /**
  * Audio data packet
- *  
+ *
  * @author francois
  */
 public class Audio extends ContentData {

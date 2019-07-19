@@ -1,21 +1,21 @@
 package com.github.faucamp.simplertmp.packets;
 
+import com.github.faucamp.simplertmp.amf.AmfString;
+import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.github.faucamp.simplertmp.amf.AmfString;
-import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
-
 /**
  * AMF Data packet
- * 
+ * <p>
  * Also known as NOTIFY in some RTMP implementations.
- * 
+ * <p>
  * The client or the server sends this message to send Metadata or any user data
- * to the peer. Metadata includes details about the data (audio, video etc.) 
+ * to the peer. Metadata includes details about the data (audio, video etc.)
  * like creation time, duration, theme and so on.
- * 
+ *
  * @author francois
  */
 public class Data extends VariableBodyRtmpPacket {
@@ -48,8 +48,8 @@ public class Data extends VariableBodyRtmpPacket {
         readVariableData(in, bytesRead);
     }
 
-    /** 
-     * This method is public for Data to make it easy to dump its contents to 
+    /**
+     * This method is public for Data to make it easy to dump its contents to
      * another output stream
      */
     @Override

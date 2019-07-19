@@ -1,11 +1,5 @@
 package com.github.faucamp.simplertmp.packets;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.github.faucamp.simplertmp.amf.AmfBoolean;
 import com.github.faucamp.simplertmp.amf.AmfData;
 import com.github.faucamp.simplertmp.amf.AmfDecoder;
@@ -13,13 +7,19 @@ import com.github.faucamp.simplertmp.amf.AmfNull;
 import com.github.faucamp.simplertmp.amf.AmfNumber;
 import com.github.faucamp.simplertmp.amf.AmfString;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * RTMP packet with a "variable" body structure (i.e. the structure of the
  * body depends on some other state/parameter in the packet.
- * 
+ * <p>
  * Examples of this type of packet are Command and Data; this abstract class
  * exists mostly for code re-use.
- * 
+ *
  * @author francois
  */
 public abstract class VariableBodyRtmpPacket extends RtmpPacket {
@@ -41,7 +41,7 @@ public abstract class VariableBodyRtmpPacket extends RtmpPacket {
     public void addData(double number) {
         addData(new AmfNumber(number));
     }
-    
+
     public void addData(boolean bool) {
         addData(new AmfBoolean(bool));
     }

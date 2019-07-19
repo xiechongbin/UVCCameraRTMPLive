@@ -1,21 +1,21 @@
 package com.github.faucamp.simplertmp.packets;
 
+import com.github.faucamp.simplertmp.Util;
+import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.github.faucamp.simplertmp.Util;
-import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
-
 /**
  * A "Abort" RTMP control message, received on chunk stream ID 2 (control channel)
- * 
+ *
  * @author francois
  */
 public class Abort extends RtmpPacket {
 
     private int chunkStreamId;
-    
+
     public Abort(RtmpHeader header) {
         super(header);
     }
@@ -25,12 +25,16 @@ public class Abort extends RtmpPacket {
         this.chunkStreamId = chunkStreamId;
     }
 
-    /** @return the ID of the chunk stream to be aborted */
+    /**
+     * @return the ID of the chunk stream to be aborted
+     */
     public int getChunkStreamId() {
         return chunkStreamId;
     }
 
-    /** Sets the ID of the chunk stream to be aborted */
+    /**
+     * Sets the ID of the chunk stream to be aborted
+     */
     public void setChunkStreamId(int chunkStreamId) {
         this.chunkStreamId = chunkStreamId;
     }

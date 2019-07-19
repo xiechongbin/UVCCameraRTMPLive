@@ -1,16 +1,16 @@
 package com.github.faucamp.simplertmp.amf;
 
+import com.github.faucamp.simplertmp.Util;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
-import com.github.faucamp.simplertmp.Util;
-
 /**
- * AMF map; that is, an "object"-like structure of key/value pairs, but with 
+ * AMF map; that is, an "object"-like structure of key/value pairs, but with
  * an array-like size indicator at the start (which is seemingly always 0)
- * 
+ *
  * @author francois
  */
 public class AmfMap extends AmfObject {

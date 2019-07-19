@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This was created primarily to address a NIO bug in Android 2.2 when
  * used with Apache Mina, but also to provide an easy-to-use way to access
  * RTMP streams
- * 
+ *
  * @author francois, leo
  */
 public interface RtmpPublisher {
@@ -18,16 +18,16 @@ public interface RtmpPublisher {
      * @return If succeeded return true else return false
      */
     boolean connect(String url);
-    
+
     /**
-     * Issues an RTMP "publish" command and write the media content stream packets (audio and video). 
-     * 
+     * Issues an RTMP "publish" command and write the media content stream packets (audio and video).
+     *
      * @param publishType specify the way to publish raw RTMP packets among "live", "record" and "append"
      * @return If succeeded return true else return false
      * @throws IllegalStateException if the client is not connected to a RTMP server
      */
     boolean publish(String publishType);
-     
+
     /**
      * Stop and close the current RTMP streaming client.
      */
@@ -38,7 +38,7 @@ public interface RtmpPublisher {
      *
      * @param data video stream byte array
      * @param size video stream byte size (not the whole length of byte array)
-     * @param dts video stream decoding timestamp
+     * @param dts  video stream decoding timestamp
      */
     void publishVideoData(byte[] data, int size, int dts);
 
@@ -47,7 +47,7 @@ public interface RtmpPublisher {
      *
      * @param data audio stream byte array
      * @param size audio stream byte size (not the whole length of byte array)
-     * @param dts audio stream decoding timestamp
+     * @param dts  audio stream decoding timestamp
      */
     void publishAudioData(byte[] data, int size, int dts);
 
@@ -74,7 +74,7 @@ public interface RtmpPublisher {
     /**
      * set video resolution
      *
-     * @param width video width
+     * @param width  video width
      * @param height video height
      */
     void setVideoResolution(int width, int height);

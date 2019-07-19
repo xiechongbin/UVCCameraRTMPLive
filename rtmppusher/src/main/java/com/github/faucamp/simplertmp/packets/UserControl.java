@@ -1,17 +1,17 @@
 package com.github.faucamp.simplertmp.packets;
 
+import com.github.faucamp.simplertmp.Util;
+import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.github.faucamp.simplertmp.Util;
-import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
-
 /**
  * User Control message, such as ping
- * 
+ *
  * @author francois
  */
 public class UserControl extends RtmpPacket {
@@ -22,13 +22,13 @@ public class UserControl extends RtmpPacket {
      */
     public static enum Type {
 
-        /** 
+        /**
          * Type: 0
-         * The server sends this event to notify the client that a stream has become 
+         * The server sends this event to notify the client that a stream has become
          * functional and can be used for communication. By default, this event
          * is sent on ID 0 after the application connect command is successfully
-         * received from the client. 
-         * 
+         * received from the client.
+         * <p>
          * Event Data:
          * eventData[0] (int) the stream ID of the stream that became functional
          */
@@ -39,30 +39,30 @@ public class UserControl extends RtmpPacket {
          * data is over as requested on this stream. No more data is sent without
          * issuing additional commands. The client discards the messages received
          * for the stream.
-         * 
+         * <p>
          * Event Data:
          * eventData[0]: the ID of thestream on which playback has ended.
          */
         STREAM_EOF(1),
         /**
          * Type: 2
-         * The server sends this event to notify the client that there is no 
+         * The server sends this event to notify the client that there is no
          * more data on the stream. If the server does not detect any message for
-         * a time period, it can notify the subscribed clients that the stream is 
-         * dry. 
-         * 
+         * a time period, it can notify the subscribed clients that the stream is
+         * dry.
+         * <p>
          * Event Data:
-         * eventData[0]: the stream ID of the dry stream. 
+         * eventData[0]: the stream ID of the dry stream.
          */
         STREAM_DRY(2),
         /**
          * Type: 3
-         * The client sends this event to inform the server of the buffer size 
+         * The client sends this event to inform the server of the buffer size
          * (in milliseconds) that is used to buffer any data coming over a stream.
          * This event is sent before the server starts  processing the stream.
-         * 
+         * <p>
          * Event Data:
-         * eventData[0]: the stream ID and 
+         * eventData[0]: the stream ID and
          * eventData[1]: the buffer length, in milliseconds.
          */
         SET_BUFFER_LENGTH(3),
@@ -70,51 +70,51 @@ public class UserControl extends RtmpPacket {
          * Type: 4
          * The server sends this event to notify the client that the stream is a
          * recorded stream.
-         * 
+         * <p>
          * Event Data:
-         * eventData[0]: the stream ID of the recorded stream.         
+         * eventData[0]: the stream ID of the recorded stream.
          */
         STREAM_IS_RECORDED(4),
         /**
          * Type: 6
-         * The server sends this event to test whether the client is reachable. 
-         * 
+         * The server sends this event to test whether the client is reachable.
+         * <p>
          * Event Data:
-         * eventData[0]: a timestamp representing the local server time when the server dispatched the command. 
-         * 
+         * eventData[0]: a timestamp representing the local server time when the server dispatched the command.
+         * <p>
          * The client responds with PING_RESPONSE on receiving PING_REQUEST.
          */
         PING_REQUEST(6),
         /**
          * Type: 7
-         * The client sends this event to the server in response to the ping request. 
-         * 
+         * The client sends this event to the server in response to the ping request.
+         * <p>
          * Event Data:
          * eventData[0]: the 4-byte timestamp which was received with the PING_REQUEST.
          */
         PONG_REPLY(7),
         /**
          * Type: 31 (0x1F)
-         * 
+         * <p>
          * This user control type is not specified in any official documentation, but
          * is sent by Flash Media Server 3.5. Thanks to the rtmpdump devs for their
-         * explanation: 
-         * 
+         * explanation:
+         * <p>
          * Buffer Empty (unofficial name): After the server has sent a complete buffer, and
          * sends this Buffer Empty message, it will wait until the play
          * duration of that buffer has passed before sending a new buffer.
          * The Buffer Ready message will be sent when the new buffer starts.
-         *
-         * (see also: http://repo.or.cz/w/rtmpdump.git/blob/8880d1456b282ee79979adbe7b6a6eb8ad371081:/librtmp/rtmp.c#l2787)         
+         * <p>
+         * (see also: http://repo.or.cz/w/rtmpdump.git/blob/8880d1456b282ee79979adbe7b6a6eb8ad371081:/librtmp/rtmp.c#l2787)
          */
         BUFFER_EMPTY(31),
         /**
          * Type: 32 (0x20)
-         * 
+         * <p>
          * This user control type is not specified in any official documentation, but
          * is sent by Flash Media Server 3.5. Thanks to the rtmpdump devs for their
-         * explanation: 
-         * 
+         * explanation:
+         * <p>
          * Buffer Ready (unofficial name): After the server has sent a complete buffer, and
          * sends a Buffer Empty message, it will wait until the play
          * duration of that buffer has passed before sending a new buffer.
@@ -122,11 +122,11 @@ public class UserControl extends RtmpPacket {
          * (There is no BufferReady message for the very first buffer;
          * presumably the Stream Begin message is sufficient for that
          * purpose.)
-         *
-         * (see also: http://repo.or.cz/w/rtmpdump.git/blob/8880d1456b282ee79979adbe7b6a6eb8ad371081:/librtmp/rtmp.c#l2787)         
+         * <p>
+         * (see also: http://repo.or.cz/w/rtmpdump.git/blob/8880d1456b282ee79979adbe7b6a6eb8ad371081:/librtmp/rtmp.c#l2787)
          */
         BUFFER_READY(32);
-        
+
         private int intValue;
         private static final Map<Integer, Type> quickLookupMap = new HashMap<Integer, Type>();
 
@@ -148,6 +148,7 @@ public class UserControl extends RtmpPacket {
             return quickLookupMap.get(intValue);
         }
     }
+
     private Type type;
     private int[] eventData;
 
@@ -159,7 +160,9 @@ public class UserControl extends RtmpPacket {
         super(new RtmpHeader(channelInfo.canReusePrevHeaderTx(RtmpHeader.MessageType.USER_CONTROL_MESSAGE) ? RtmpHeader.ChunkType.TYPE_2_RELATIVE_TIMESTAMP_ONLY : RtmpHeader.ChunkType.TYPE_0_FULL, ChunkStreamInfo.RTMP_CID_PROTOCOL_CONTROL, RtmpHeader.MessageType.USER_CONTROL_MESSAGE));
     }
 
-    /** Convenience construtor that creates a "pong" message for the specified ping */
+    /**
+     * Convenience construtor that creates a "pong" message for the specified ping
+     */
     public UserControl(UserControl replyToPing, ChunkStreamInfo channelInfo) {
         this(Type.PONG_REPLY, channelInfo);
         this.eventData = replyToPing.eventData;
@@ -178,7 +181,7 @@ public class UserControl extends RtmpPacket {
         this.type = type;
     }
 
-    /** 
+    /**
      * Convenience method for getting the first event data item, as most user control
      * message types only have one event data item anyway
      * This is equivalent to calling <code>getEventData()[0]</code>
@@ -191,7 +194,9 @@ public class UserControl extends RtmpPacket {
         return eventData;
     }
 
-    /** Used to set (a single) event data for most user control message types */
+    /**
+     * Used to set (a single) event data for most user control message types
+     */
     public void setEventData(int eventData) {
         if (type == Type.SET_BUFFER_LENGTH) {
             throw new IllegalStateException("SET_BUFFER_LENGTH requires two event data values; use setEventData(int, int) instead");
@@ -199,7 +204,9 @@ public class UserControl extends RtmpPacket {
         this.eventData = new int[]{eventData};
     }
 
-    /** Used to set event data for the SET_BUFFER_LENGTH user control message types */
+    /**
+     * Used to set event data for the SET_BUFFER_LENGTH user control message types
+     */
     public void setEventData(int streamId, int bufferLength) {
         if (type != Type.SET_BUFFER_LENGTH) {
             throw new IllegalStateException("User control type " + type + " requires only one event data value; use setEventData(int) instead");

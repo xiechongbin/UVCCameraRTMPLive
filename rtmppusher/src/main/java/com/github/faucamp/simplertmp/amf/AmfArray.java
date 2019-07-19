@@ -1,16 +1,16 @@
 package com.github.faucamp.simplertmp.amf;
 
+import com.github.faucamp.simplertmp.Util;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.faucamp.simplertmp.Util;
-
 /**
  * AMF Array
- * 
+ *
  * @author francois
  */
 public class AmfArray implements AmfData {
@@ -49,7 +49,9 @@ public class AmfArray implements AmfData {
         return size;
     }
 
-    /** @return the amount of items in this the array */
+    /**
+     * @return the amount of items in this the array
+     */
     public int getLength() {
         return items != null ? items.size() : 0;
     }

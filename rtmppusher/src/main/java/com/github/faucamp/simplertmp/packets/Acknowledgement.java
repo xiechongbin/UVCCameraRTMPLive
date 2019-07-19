@@ -1,22 +1,22 @@
 package com.github.faucamp.simplertmp.packets;
 
+import com.github.faucamp.simplertmp.Util;
+import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.github.faucamp.simplertmp.Util;
-import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
-
 /**
  * (Window) Acknowledgement
- * 
+ * <p>
  * The client or the server sends the acknowledgment to the peer after
  * receiving bytes equal to the window size. The window size is the
  * maximum number of bytes that the sender sends without receiving
  * acknowledgment from the receiver. The server sends the window size to
  * the client after application connects. This message specifies the
  * sequence number, which is the number of the bytes received so far.
- * 
+ *
  * @author francois
  */
 public class Acknowledgement extends RtmpPacket {
@@ -36,12 +36,16 @@ public class Acknowledgement extends RtmpPacket {
         return sequenceNumber;
     }
 
-    /** @return the sequence number, which is the number of the bytes received so far */
+    /**
+     * @return the sequence number, which is the number of the bytes received so far
+     */
     public int getSequenceNumber() {
         return sequenceNumber;
     }
 
-    /** Sets the sequence number, which is the number of the bytes received so far */
+    /**
+     * Sets the sequence number, which is the number of the bytes received so far
+     */
     public void setSequenceNumber(int numBytesRead) {
         this.sequenceNumber = numBytesRead;
     }

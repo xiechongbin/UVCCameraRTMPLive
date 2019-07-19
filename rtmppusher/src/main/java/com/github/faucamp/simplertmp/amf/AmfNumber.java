@@ -1,20 +1,22 @@
 package com.github.faucamp.simplertmp.amf;
 
+import com.github.faucamp.simplertmp.Util;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.github.faucamp.simplertmp.Util;
-
 /**
  * AMF0 Number data type
- * 
+ *
  * @author francois
  */
 public class AmfNumber implements AmfData {
 
     double value;
-    /** Size of an AMF number, in bytes (including type bit) */
+    /**
+     * Size of an AMF number, in bytes (including type bit)
+     */
     public static final int SIZE = 9;
 
     public AmfNumber(double value) {
@@ -30,8 +32,8 @@ public class AmfNumber implements AmfData {
 
     public void setValue(double value) {
         this.value = value;
-    }    
-    
+    }
+
     @Override
     public void writeTo(OutputStream out) throws IOException {
         out.write(AmfType.NUMBER.getValue());
@@ -43,21 +45,21 @@ public class AmfNumber implements AmfData {
         // Skip data type byte (we assume it's already read)
         value = Util.readDouble(in);
     }
-    
+
     public static double readNumberFrom(InputStream in) throws IOException {
-       // Skip data type byte
-       in.read();       
-       return Util.readDouble(in);
+        // Skip data type byte
+        in.read();
+        return Util.readDouble(in);
     }
-    
+
     public static void writeNumberTo(OutputStream out, double number) throws IOException {
-       out.write(AmfType.NUMBER.getValue());
-       Util.writeDouble(out, number);
-    } 
-    
+        out.write(AmfType.NUMBER.getValue());
+        Util.writeDouble(out, number);
+    }
+
     @Override
     public int getSize() {
         return SIZE;
     }
-    
+
 }

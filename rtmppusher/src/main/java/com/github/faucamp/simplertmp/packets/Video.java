@@ -4,7 +4,7 @@ import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
 
 /**
  * Video data packet
- *  
+ *
  * @author francois
  */
 public class Video extends ContentData {

@@ -1,17 +1,17 @@
 package com.github.faucamp.simplertmp.packets;
 
+import com.github.faucamp.simplertmp.Util;
+import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.github.faucamp.simplertmp.Util;
-import com.github.faucamp.simplertmp.io.ChunkStreamInfo;
-
 /**
  * Window Acknowledgement Size
- * 
+ * <p>
  * Also known as ServerBW ("Server bandwidth") in some RTMP implementations.
- * 
+ *
  * @author francois
  */
 public class WindowAckSize extends RtmpPacket {
@@ -21,7 +21,7 @@ public class WindowAckSize extends RtmpPacket {
     public WindowAckSize(RtmpHeader header) {
         super(header);
     }
-    
+
     public WindowAckSize(int acknowledgementWindowSize, ChunkStreamInfo channelInfo) {
         super(new RtmpHeader(channelInfo.canReusePrevHeaderTx(RtmpHeader.MessageType.WINDOW_ACKNOWLEDGEMENT_SIZE) ? RtmpHeader.ChunkType.TYPE_2_RELATIVE_TIMESTAMP_ONLY : RtmpHeader.ChunkType.TYPE_0_FULL, ChunkStreamInfo.RTMP_CID_PROTOCOL_CONTROL, RtmpHeader.MessageType.WINDOW_ACKNOWLEDGEMENT_SIZE));
         this.acknowledgementWindowSize = acknowledgementWindowSize;
