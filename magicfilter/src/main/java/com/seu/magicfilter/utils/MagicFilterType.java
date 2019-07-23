@@ -5,7 +5,6 @@ package com.seu.magicfilter.utils;
  */
 public enum  MagicFilterType {
     NONE,
-    FAIRYTALE,
     SUNRISE,
     SUNSET,
     WHITECAT,
@@ -13,7 +12,6 @@ public enum  MagicFilterType {
     SKINWHITEN,
     BEAUTY,
     HEALTHY,
-    SWEETS,
     ROMANCE,
     SAKURA,
     WARM,
@@ -25,19 +23,15 @@ public enum  MagicFilterType {
     COOL,
     EMERALD,
     EVERGREEN,
-    CRAYON,
     SKETCH,
     AMARO,
     BRANNAN,
     BROOKLYN,
     EARLYBIRD,
     FREUD,
-    HEFE,
     HUDSON,
     INKWELL,
     KEVIN,
-    LOCKUP,
-    LOMO,
     N1977,
     NASHVILLE,
     PIXAR,
@@ -47,13 +41,5 @@ public enum  MagicFilterType {
     TOASTER2,
     VALENCIA,
     WALDEN,
-    XPROII,
-    //image adjust
-    CONTRAST,
-    BRIGHTNESS,
-    EXPOSURE,
-    HUE,
-    SATURATION,
-    SHARPEN,
-    IMAGE_ADJUST
+    XPROII
 }
