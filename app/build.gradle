@@ -48,5 +48,4 @@ dependencies {
     implementation 'com.orhanobut:logger:2.2.0'
     implementation 'com.zhy:base-rvadapter:3.0.3'
     implementation project(':yasea')
-    implementation project(':uvccamera')
 }

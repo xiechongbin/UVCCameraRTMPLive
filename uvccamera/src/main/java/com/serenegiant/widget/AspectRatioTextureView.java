@@ -36,11 +36,7 @@ import android.view.TextureView;
 public class AspectRatioTextureView extends TextureView	// API >= 14
 	implements IAspectRatioView {
 
-	private static final boolean DEBUG = true;	// TODO set false on release
-	private static final String TAG = "AbstractCameraView";
-
     private double mRequestedAspect = -1.0;
-	private CameraViewInterface.Callback mCallback;
 
 	public AspectRatioTextureView(final Context context) {
 		this(context, null, 0);

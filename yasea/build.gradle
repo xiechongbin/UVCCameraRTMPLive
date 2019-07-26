@@ -41,4 +41,5 @@ dependencies {
     api project(':magicfilter')
     api project(':mp4parser')
     api project(':rtmppusher')
+    api project(':uvccamera')
 }
