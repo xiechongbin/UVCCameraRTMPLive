@@ -113,26 +113,21 @@ public class UVCCamera {
     public static final int STATUS_ATTRIBUTE_FAILURE_CHANGE = 0x02;
     public static final int STATUS_ATTRIBUTE_UNKNOWN = 0xff;
 
-    private static boolean isLoaded;
-
     static {
-        if (!isLoaded) {
-            System.loadLibrary("jpeg-turbo1500");
-            System.loadLibrary("usb100");
-            System.loadLibrary("uvc");
-            System.loadLibrary("UVCCamera");
-            isLoaded = true;
-        }
+        System.loadLibrary("jpeg-turbo1500");
+        System.loadLibrary("usb100");
+        System.loadLibrary("uvc");
+        System.loadLibrary("UVCCamera");
     }
 
     private UsbControlBlock mCtrlBlock;
-    protected long mControlSupports;// カメラコントロールでサポートしている機能フラグ
-    protected long mProcSupports;// プロセッシングユニットでサポートしている機能フラグ
-    protected int mCurrentFrameFormat = FRAME_FORMAT_MJPEG;
-    protected int mCurrentWidth = DEFAULT_PREVIEW_WIDTH, mCurrentHeight = DEFAULT_PREVIEW_HEIGHT;
-    protected float mCurrentBandwidthFactor = DEFAULT_BANDWIDTH;
-    protected String mSupportedSize;
-    protected List<Size> mCurrentSizeList;
+    private long mControlSupports;// カメラコントロールでサポートしている機能フラグ
+    private long mProcSupports;// プロセッシングユニットでサポートしている機能フラグ
+    private int mCurrentFrameFormat = FRAME_FORMAT_MJPEG;
+    private int mCurrentWidth = DEFAULT_PREVIEW_WIDTH;
+    private int mCurrentHeight = DEFAULT_PREVIEW_HEIGHT;
+    private float mCurrentBandwidthFactor = DEFAULT_BANDWIDTH;
+    private String mSupportedSize;
     // these fields from here are accessed from native code and do not change name and remove
     protected long mNativePtr;
     protected int mScanningModeMin, mScanningModeMax, mScanningModeDef;
@@ -140,7 +135,7 @@ public class UVCCamera {
     protected int mExposurePriorityMin, mExposurePriorityMax, mExposurePriorityDef;
     protected int mExposureMin, mExposureMax, mExposureDef;
     protected int mAutoFocusMin, mAutoFocusMax, mAutoFocusDef;
-    protected int mFocusMin, mFocusMax, mFocusDef;
+    private int mFocusMin, mFocusMax, mFocusDef;
     protected int mFocusRelMin, mFocusRelMax, mFocusRelDef;
     protected int mFocusSimpleMin, mFocusSimpleMax, mFocusSimpleDef;
     protected int mIrisMin, mIrisMax, mIrisDef;
@@ -154,18 +149,18 @@ public class UVCCamera {
     protected int mPrivacyMin, mPrivacyMax, mPrivacyDef;
     protected int mAutoWhiteBlanceMin, mAutoWhiteBlanceMax, mAutoWhiteBlanceDef;
     protected int mAutoWhiteBlanceCompoMin, mAutoWhiteBlanceCompoMax, mAutoWhiteBlanceCompoDef;
-    protected int mWhiteBlanceMin, mWhiteBlanceMax, mWhiteBlanceDef;
+    private int mWhiteBlanceMin, mWhiteBlanceMax, mWhiteBlanceDef;
     protected int mWhiteBlanceCompoMin, mWhiteBlanceCompoMax, mWhiteBlanceCompoDef;
     protected int mWhiteBlanceRelMin, mWhiteBlanceRelMax, mWhiteBlanceRelDef;
     protected int mBacklightCompMin, mBacklightCompMax, mBacklightCompDef;
-    protected int mBrightnessMin, mBrightnessMax, mBrightnessDef;
-    protected int mContrastMin, mContrastMax, mContrastDef;
-    protected int mSharpnessMin, mSharpnessMax, mSharpnessDef;
-    protected int mGainMin, mGainMax, mGainDef;
-    protected int mGammaMin, mGammaMax, mGammaDef;
-    protected int mSaturationMin, mSaturationMax, mSaturationDef;
-    protected int mHueMin, mHueMax, mHueDef;
-    protected int mZoomMin, mZoomMax, mZoomDef;
+    private int mBrightnessMin, mBrightnessMax, mBrightnessDef;
+    private int mContrastMin, mContrastMax, mContrastDef;
+    private int mSharpnessMin, mSharpnessMax, mSharpnessDef;
+    private int mGainMin, mGainMax, mGainDef;
+    private int mGammaMin, mGammaMax, mGammaDef;
+    private int mSaturationMin, mSaturationMax, mSaturationDef;
+    private int mHueMin, mHueMax, mHueDef;
+    private int mZoomMin, mZoomMax, mZoomDef;
     protected int mZoomRelMin, mZoomRelMax, mZoomRelDef;
     protected int mPowerlineFrequencyMin, mPowerlineFrequencyMax, mPowerlineFrequencyDef;
     protected int mMultiplierMin, mMultiplierMax, mMultiplierDef;
@@ -175,7 +170,7 @@ public class UVCCamera {
     // until here
 
     /**
-     * the sonctructor of this class should be call within the thread that has a looper
+     * the constructor of this class should be call within the thread that has a looper
      * (UI thread or a thread that called Looper.prepare)
      */
     public UVCCamera() {
@@ -245,7 +240,6 @@ public class UVCCamera {
         mCurrentFrameFormat = -1;
         mCurrentBandwidthFactor = 0;
         mSupportedSize = null;
-        mCurrentSizeList = null;
         if (DEBUG) Log.v(TAG, "close:finished");
     }
 
@@ -375,7 +369,7 @@ public class UVCCamera {
      * set preview surface with SurfaceTexture.
      * this method require API >= 14
      */
-    public synchronized void setPreviewTexture(SurfaceTexture texture) {    // API >= 11
+    public synchronized void setPreviewTexture(SurfaceTexture texture) {
         Surface surface = new Surface(texture);    // XXX API >= 14
         nativeSetPreviewDisplay(mNativePtr, surface);
     }
@@ -427,7 +421,7 @@ public class UVCCamera {
     }
 
     // wrong result may return when you call this just after camera open.
-    // it is better to wait several hundreads millseconds.
+    // it is better to wait several hundred millSeconds.
     public boolean checkSupportFlag(long flag) {
         updateCameraParams();
         if ((flag & 0x80000000) == 0x80000000)

@@ -1,6 +1,7 @@
 package com.bajie.uvccamera.rtmplive.activity;
 
 import android.hardware.usb.UsbDevice;
+import android.view.Surface;
 import android.view.WindowManager;
 
 import com.bajie.uvccamera.rtmplive.R;
@@ -9,6 +10,7 @@ import com.orhanobut.logger.Logger;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.UVCCamera;
 import com.serenegiant.usbcameracommon.UVCCameraHandler;
+import com.serenegiant.widget.CameraViewInterface;
 import com.serenegiant.widget.UVCCameraTextureView;
 
 /**
@@ -45,6 +47,7 @@ public class ExternalCameraLiveActivity extends BaseActivity {
         @Override
         public void onAttach(UsbDevice device) {
             Logger.e("USBMonitor:onAttach");
+            //请求获取外部USB设备临时权限
             usbMonitor.requestPermission(device);
         }
 
@@ -56,19 +59,48 @@ public class ExternalCameraLiveActivity extends BaseActivity {
         @Override
         public void onConnect(UsbDevice device, USBMonitor.UsbControlBlock ctrlBlock, boolean createNew) {
             Logger.e("USBMonitor:onConnect");
+            //打开USB摄像头
             uvcCameraHandler.open(ctrlBlock);
-            uvcCameraHandler.startPreview(uvcCameraView.getSurfaceTexture());
+            //监听Surface的变化情况
+            uvcCameraView.setCallback(callback);
         }
 
         @Override
         public void onDisconnect(UsbDevice device, USBMonitor.UsbControlBlock ctrlBlock) {
             Logger.e("USBMonitor:onDisconnect");
+            //取消监听Surface的变化情况
+            uvcCameraView.setCallback(null);
+            //关闭USB摄像头
             uvcCameraHandler.close();
         }
 
         @Override
         public void onCancel(UsbDevice device) {
             Logger.e("USBMonitor:onCancel");
+        }
+    };
+
+    private CameraViewInterface.Callback callback = new CameraViewInterface.Callback() {
+        @Override
+        public void onSurfaceCreated(CameraViewInterface view, Surface surface) {
+            Logger.e("onSurfaceCreated:" + surface);
+            //开启预览画面
+            uvcCameraHandler.startPreview(surface);
+        }
+
+        @Override
+        public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height) {
+            Logger.e("onSurfaceChanged:" + surface);
+            //停止后再次开启预览画面
+            uvcCameraHandler.stopPreview();
+            uvcCameraHandler.startPreview(surface);
+        }
+
+        @Override
+        public void onSurfaceDestroy(CameraViewInterface view, Surface surface) {
+            Logger.e("onSurfaceDestroy:" + surface);
+            //停止预览画面
+            uvcCameraHandler.stopPreview();
         }
     };
 

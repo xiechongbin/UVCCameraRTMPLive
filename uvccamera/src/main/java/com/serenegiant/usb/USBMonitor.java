@@ -166,7 +166,7 @@ public class USBMonitor {
             }
             // start connection check
             mDeviceCounts = 0;
-            mAsyncHandler.postDelayed(mDeviceCheckRunnable, 1000);
+            mAsyncHandler.post(mDeviceCheckRunnable);
         }
     }
 
@@ -372,8 +372,7 @@ public class USBMonitor {
     /**
      * request permission to access to USB device
      */
-    public synchronized boolean requestPermission(UsbDevice device) {
-        boolean result = false;
+    public synchronized void requestPermission(UsbDevice device) {
         if (isRegistered()) {
             if (device != null) {
                 if (mUsbManager.hasPermission(device)) {
@@ -387,18 +386,14 @@ public class USBMonitor {
                         // Android5.1.xのGALAXY系でandroid.permission.sec.MDM_APP_MGMTという意味不明の例外生成するみたい
                         Log.w(TAG, e);
                         processCancel(device);
-                        result = true;
                     }
                 }
             } else {
                 processCancel(null);
-                result = true;
             }
         } else {
             processCancel(device);
-            result = true;
         }
-        return result;
     }
 
     /**
@@ -440,10 +435,6 @@ public class USBMonitor {
                         processCancel(device);
                     }
                 }
-            } else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
-                UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                updatePermission(device, hasPermission(device));
-                processAttach(device);
             } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
                 // when device removed
                 UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
@@ -485,19 +476,12 @@ public class USBMonitor {
             }
             if ((n > mDeviceCounts) || (m > hasPermissionCounts)) {
                 mDeviceCounts = n;
-                if (mOnDeviceConnectListener != null) {
-                    for (int i = 0; i < n; i++) {
-                        final UsbDevice device = devices.get(i);
-                        mAsyncHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mOnDeviceConnectListener.onAttach(device);
-                            }
-                        });
-                    }
+                for (int i = 0; i < n; i++) {
+                    UsbDevice device = devices.get(i);
+                    processAttach(device);
                 }
             }
-            mAsyncHandler.postDelayed(this, 2000);    // confirm every 2 seconds
+            mAsyncHandler.postDelayed(this, 2000);// confirm every 2 seconds
         }
     };
 
@@ -511,9 +495,8 @@ public class USBMonitor {
             @Override
             public void run() {
                 if (DEBUG) Log.v(TAG, "processConnect:device=" + device);
-                UsbControlBlock ctrlBlock;
                 boolean createNew;
-                ctrlBlock = mCtrlBlocks.get(device);
+                UsbControlBlock ctrlBlock = mCtrlBlocks.get(device);
                 if (ctrlBlock == null) {
                     ctrlBlock = new UsbControlBlock(USBMonitor.this, device);
                     mCtrlBlocks.put(device, ctrlBlock);
@@ -1196,14 +1179,14 @@ public class USBMonitor {
             if (mConnection != null) {
                 int n = mInterfaces.size();
                 for (int i = 0; i < n; i++) {
-                    SparseArray<UsbInterface> intfs = mInterfaces.valueAt(i);
-                    if (intfs != null) {
-                        int m = intfs.size();
+                    SparseArray<UsbInterface> interfaces = mInterfaces.valueAt(i);
+                    if (interfaces != null) {
+                        int m = interfaces.size();
                         for (int j = 0; j < m; j++) {
-                            UsbInterface intf = intfs.valueAt(j);
-                            mConnection.releaseInterface(intf);
+                            UsbInterface usbInterface = interfaces.valueAt(j);
+                            mConnection.releaseInterface(usbInterface);
                         }
-                        intfs.clear();
+                        interfaces.clear();
                     }
                 }
                 mInterfaces.clear();

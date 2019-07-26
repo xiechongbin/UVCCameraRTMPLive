@@ -242,9 +242,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
      *
      * @author saki
      */
-    private static class RenderHandler extends Handler
-            implements SurfaceTexture.OnFrameAvailableListener {
-
+    private static class RenderHandler extends Handler implements SurfaceTexture.OnFrameAvailableListener {
         private static final int MSG_REQUEST_RENDER = 1;
         private static final int MSG_SET_ENCODER = 2;
         private static final int MSG_CREATE_SURFACE = 3;
@@ -255,9 +253,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
         private boolean mIsActive = true;
         private FpsCounter mFpsCounter;
 
-        public static RenderHandler createHandler(FpsCounter counter,
-                                                  SurfaceTexture surface, int width, int height) {
-
+        public static RenderHandler createHandler(FpsCounter counter, SurfaceTexture surface, int width, int height) {
             RenderThread thread = new RenderThread(counter, surface, width, height);
             thread.start();
             return thread.getHandler();

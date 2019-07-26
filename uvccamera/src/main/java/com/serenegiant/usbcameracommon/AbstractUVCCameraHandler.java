@@ -334,7 +334,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
         }
     }
 
-    static final class CameraThread extends Thread {
+    public static class CameraThread extends Thread {
         private static final String TAG_THREAD = "CameraThread";
         private final Object mSync = new Object();
         private Class<? extends AbstractUVCCameraHandler> mHandlerClass;
@@ -481,11 +481,13 @@ abstract class AbstractUVCCameraHandler extends Handler {
                 return;
             }
             try {
-                mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, mPreviewMode, mBandwidthFactor);
+                mUVCCamera.setPreviewSize(mWidth, mHeight, UVCCamera.DEFAULT_PREVIEW_MIN_FPS,
+                        UVCCamera.DEFAULT_PREVIEW_MAX_FPS, mPreviewMode, mBandwidthFactor);
             } catch (IllegalArgumentException e) {
                 try {
                     // fallback to YUV mode
-                    mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
+                    mUVCCamera.setPreviewSize(mWidth, mHeight, UVCCamera.DEFAULT_PREVIEW_MIN_FPS,
+                            UVCCamera.DEFAULT_PREVIEW_MAX_FPS, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
                 } catch (IllegalArgumentException e1) {
                     callOnError(e1);
                     return;
