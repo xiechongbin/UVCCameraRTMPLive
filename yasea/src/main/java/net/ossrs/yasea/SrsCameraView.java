@@ -17,7 +17,6 @@ import com.seu.magicfilter.utils.MagicFilterFactory;
 import com.seu.magicfilter.utils.MagicFilterType;
 import com.seu.magicfilter.utils.OpenGLUtils;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.List;
@@ -30,6 +29,10 @@ import javax.microedition.khronos.opengles.GL10;
  * Created by Leo Ma on 2016/2/25.
  */
 public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Renderer {
+    public static final int ERROR_CODE_CAMERA_OPEN_FAILED = 1;
+    public static final int ERROR_CODE_CAMERA_EVICTED = 2;
+    public static final int ERROR_CODE_CAMERA_PREVIEW_FAILED = 3;
+
     private GPUImageFilter magicFilter;
     private SurfaceTexture surfaceTexture;
     private int mOESTextureId = OpenGLUtils.NO_TEXTURE;
@@ -53,6 +56,7 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
     private final Object writeLock = new Object();
     private ConcurrentLinkedQueue<IntBuffer> mGLIntBufferCache = new ConcurrentLinkedQueue<>();
     private PreviewCallback mPrevCb;
+    private ErrorCallback errorCallback;
 
     public SrsCameraView(Context context) {
         this(context, null);
@@ -83,12 +87,12 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
             }
         });
 
-        // For camera preview on activity creation
+        // For camera preview on activity create
         if (mCamera != null) {
             try {
                 mCamera.setPreviewTexture(surfaceTexture);
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -138,35 +142,41 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
         mPrevCb = cb;
     }
 
-    public Camera getCamera() {
-        return this.mCamera;
+    public void setErrorCallback(ErrorCallback callback) {
+        errorCallback = callback;
     }
 
     public void setPreviewCallback(Camera.PreviewCallback previewCallback) {
-        this.mCamera.setPreviewCallback(previewCallback);
+        if (mCamera != null) {
+            try {
+                mCamera.setPreviewCallback(previewCallback);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void setPreviewResolution(int width, int height) {
         if (mCamera == null) {
-            mCamera = openCamera();
-            if (mCamera == null) {
-                return;
+            return;
+        }
+        try {
+            mPreviewWidth = width;
+            mPreviewHeight = height;
+
+            Camera.Parameters params = mCamera.getParameters();
+            Camera.Size rs = adaptPreviewResolution(mCamera.new Size(width, height), params.getSupportedPreviewSizes());
+            if (rs != null) {
+                mPreviewWidth = rs.width;
+                mPreviewHeight = rs.height;
             }
+
+            mGLPreviewBuffer = ByteBuffer.allocate(mPreviewWidth * mPreviewHeight * 4);
+            mInputAspectRatio = mPreviewWidth > mPreviewHeight ?
+                    (float) mPreviewWidth / mPreviewHeight : (float) mPreviewHeight / mPreviewWidth;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        mPreviewWidth = width;
-        mPreviewHeight = height;
-
-        Camera.Parameters params = mCamera.getParameters();
-        Camera.Size rs = adaptPreviewResolution(mCamera.new Size(width, height), params.getSupportedPreviewSizes());
-        if (rs != null) {
-            mPreviewWidth = rs.width;
-            mPreviewHeight = rs.height;
-        }
-
-        mGLPreviewBuffer = ByteBuffer.allocate(mPreviewWidth * mPreviewHeight * 4);
-        mInputAspectRatio = mPreviewWidth > mPreviewHeight ?
-                (float) mPreviewWidth / mPreviewHeight : (float) mPreviewHeight / mPreviewWidth;
     }
 
     public void setFilter(final MagicFilterType type) {
@@ -185,18 +195,6 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
             }
         });
         requestRender();
-    }
-
-    public void deleteTextures() {
-        if (mOESTextureId != OpenGLUtils.NO_TEXTURE) {
-            queueEvent(new Runnable() {
-                @Override
-                public void run() {
-                    GLES20.glDeleteTextures(1, new int[]{mOESTextureId}, 0);
-                    mOESTextureId = OpenGLUtils.NO_TEXTURE;
-                }
-            });
-        }
     }
 
     public void setCameraId(int id) {
@@ -226,41 +224,37 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
 
     public void setPreviewOrientation(int orientation) {
         if (mCamera == null) {
-            mCamera = openCamera();
-            if (mCamera == null) {
-                return;
-            }
+            return;
         }
+        try {
+            mPreviewOrientation = orientation;
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            Camera.getCameraInfo(mCamId, info);
 
-        mPreviewOrientation = orientation;
-        Camera.CameraInfo info = new Camera.CameraInfo();
-        Camera.getCameraInfo(mCamId, info);
+            int rotateDeg = getRotateDeg();
 
-        int rotateDeg = getRotateDeg();
-
-        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                mPreviewRotation = info.orientation % 360;
-                mPreviewRotation = (360 - mPreviewRotation) % 360;  // compensate the mirror
-            } else {
-                mPreviewRotation = (info.orientation + 360) % 360;
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    mPreviewRotation = info.orientation % 360;
+                    mPreviewRotation = (360 - mPreviewRotation) % 360;  // compensate the mirror
+                } else {
+                    mPreviewRotation = (info.orientation + 360) % 360;
+                }
+            } else if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    mPreviewRotation = (info.orientation - 90) % 360;
+                    mPreviewRotation = (360 - mPreviewRotation) % 360;  // compensate the mirror
+                } else {
+                    mPreviewRotation = (info.orientation + 90) % 360;
+                }
             }
-        } else if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                mPreviewRotation = (info.orientation - 90) % 360;
-                mPreviewRotation = (360 - mPreviewRotation) % 360;  // compensate the mirror
-            } else {
-                mPreviewRotation = (info.orientation + 90) % 360;
+
+            if (rotateDeg > 0) {
+                mPreviewRotation = mPreviewRotation % rotateDeg;
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        if (rotateDeg > 0) {
-            mPreviewRotation = mPreviewRotation % rotateDeg;
-        }
-    }
-
-    public int getCameraId() {
-        return mCamId;
     }
 
     public void enableEncoding() {
@@ -310,63 +304,68 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
         }
     }
 
-    public void startCamera() {
+    public void startPreview() {
         if (mCamera == null) {
-            mCamera = openCamera();
-            if (mCamera == null) {
-                return;
-            }
+            return;
         }
-
-        Camera.Parameters params = mCamera.getParameters();
-        int[] range = adaptFpsRange(SrsEncoder.vFPS, params.getSupportedPreviewFpsRange());
-        params.setPreviewFpsRange(range[0], range[1]);
-        params.setPreviewFormat(ImageFormat.NV21);
-        params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-        params.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_AUTO);
-        params.setSceneMode(Camera.Parameters.SCENE_MODE_AUTO);
-        params.setRecordingHint(true);
-
-        List<String> supportedFocusModes = params.getSupportedFocusModes();
-        if (supportedFocusModes != null && !supportedFocusModes.isEmpty()) {
-            if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-            } else if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-                mCamera.autoFocus(null);
-            } else {
-                params.setFocusMode(supportedFocusModes.get(0));
-            }
-        }
-
-        getHolder().setFixedSize(mPreviewWidth, mPreviewHeight);
-        params.setPreviewSize(mPreviewWidth, mPreviewHeight);
-
-        mCamera.setParameters(params);
-
-        mCamera.setDisplayOrientation(mPreviewRotation);
-
         try {
+            Camera.Parameters params = mCamera.getParameters();
+            int[] range = adaptFpsRange(SrsEncoder.vFPS, params.getSupportedPreviewFpsRange());
+            params.setPreviewFpsRange(range[0], range[1]);
+            params.setPreviewFormat(ImageFormat.NV21);
+            params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+            params.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_AUTO);
+            params.setSceneMode(Camera.Parameters.SCENE_MODE_AUTO);
+            params.setRecordingHint(true);
+
+            List<String> supportedFocusModes = params.getSupportedFocusModes();
+            if (supportedFocusModes != null && !supportedFocusModes.isEmpty()) {
+                if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                } else if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                    mCamera.autoFocus(null);
+                } else {
+                    params.setFocusMode(supportedFocusModes.get(0));
+                }
+            }
+
+            getHolder().setFixedSize(mPreviewWidth, mPreviewHeight);
+            params.setPreviewSize(mPreviewWidth, mPreviewHeight);
+
+            mCamera.setParameters(params);
+
+            mCamera.setDisplayOrientation(mPreviewRotation);
+
             mCamera.setPreviewTexture(surfaceTexture);
-        } catch (IOException e) {
+            mCamera.startPreview();
+        } catch (Exception e) {
             e.printStackTrace();
+            stopPreview();
+            callOnError(ERROR_CODE_CAMERA_PREVIEW_FAILED);
         }
-        mCamera.startPreview();
     }
 
-    public void stopCamera() {
+    public void stopPreview() {
         disableEncoding();
         stopTorch();
         if (mCamera != null) {
-            mCamera.setPreviewCallback(null);
-            mCamera.stopPreview();
-            mCamera.release();
-            mCamera = null;
+            try {
+                mCamera.setPreviewCallback(null);
+                mCamera.stopPreview();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                mCamera.release();
+                mCamera = null;
+            }
         }
     }
 
-    protected Camera openCamera() {
-        Camera camera = null;
+    public void openCamera() {
+        if (mCamera != null) {
+            return;
+        }
         if (mCamId < 0) {
             Camera.CameraInfo info = new Camera.CameraInfo();
             int numCameras = Camera.getNumberOfCameras();
@@ -391,19 +390,20 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
         }
 
         try {
-            camera = Camera.open(mCamId);
-            camera.setErrorCallback(new Camera.ErrorCallback() {
+            mCamera = Camera.open(mCamId);
+            mCamera.setErrorCallback(new Camera.ErrorCallback() {
                 @Override
                 public void onError(int error, Camera camera) {
                     //may be Camera.CAMERA_ERROR_EVICTED - Camera was disconnected due to use by higher priority user
-                    stopCamera();
+                    stopPreview();
+                    callOnError(ERROR_CODE_CAMERA_EVICTED);
                 }
             });
-
         } catch (Exception e) {
             e.printStackTrace();
+            stopPreview();
+            callOnError(ERROR_CODE_CAMERA_OPEN_FAILED);
         }
-        return camera;
     }
 
     private Camera.Size adaptPreviewResolution(Camera.Size resolution, List<Camera.Size> sizeList) {
@@ -441,15 +441,19 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
 
     public void startTorch() {
         if (mCamera != null) {
-            Camera.Parameters params = mCamera.getParameters();
-            List<String> supportedFlashModes = params.getSupportedFlashModes();
-            if (supportedFlashModes != null && !supportedFlashModes.isEmpty()) {
-                if (supportedFlashModes.contains(Camera.Parameters.FLASH_MODE_TORCH)) {
-                    params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
-                } else {
-                    params.setFlashMode(supportedFlashModes.get(0));
+            try {
+                Camera.Parameters params = mCamera.getParameters();
+                List<String> supportedFlashModes = params.getSupportedFlashModes();
+                if (supportedFlashModes != null && !supportedFlashModes.isEmpty()) {
+                    if (supportedFlashModes.contains(Camera.Parameters.FLASH_MODE_TORCH)) {
+                        params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+                    } else {
+                        params.setFlashMode(supportedFlashModes.get(0));
+                    }
+                    mCamera.setParameters(params);
                 }
-                mCamera.setParameters(params);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -469,6 +473,16 @@ public class SrsCameraView extends GLSurfaceView implements GLSurfaceView.Render
     public interface PreviewCallback {
 
         void onGetRgbaFrame(byte[] data, int width, int height);
+    }
+
+    public interface ErrorCallback {
+        void onError(int error);
+    }
+
+    private void callOnError(int error) {
+        if (errorCallback != null) {
+            errorCallback.onError(error);
+        }
     }
 
 }

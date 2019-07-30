@@ -380,7 +380,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
                 break;
             case R.id.btn_open_flash_light:
                 //打开或关闭闪光灯
-                if (btn_start.getText().toString().equals("结束直播")) {
+                if (btn_start.getText().toString().equals("结束直播") && btn_back_camera.getText().toString().equals("前置摄像头")) {
                     if (btn_open_flash_light.getText().toString().equals("闪光灯关")) {
                         btn_open_flash_light.setText("闪光灯开");
                         publisher.stopTorch();
