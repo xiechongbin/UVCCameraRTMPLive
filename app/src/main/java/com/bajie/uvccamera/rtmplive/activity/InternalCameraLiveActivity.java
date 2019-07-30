@@ -138,6 +138,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         publisher.setEncodeHandler(new SrsEncodeHandler(srsEncodeListener));
         publisher.setRecordHandler(new SrsRecordHandler(srsRecordListener));
         publisher.setRtmpHandler(new RtmpHandler(rtmpListener));
+        publisher.setErrorCallback(errorCallback);
     }
 
     private Runnable runnable = new Runnable() {
@@ -150,7 +151,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
             }
             flag++;
             tv_info.setText("帧率：");
-            tv_info.append(String.format(Locale.CHINESE, "%.2f", publisher.getmSamplingFps()));
+            tv_info.append(String.format(Locale.CHINESE, "%.2f", publisher.getSamplingFps()));
             tv_info.append("fps");
             handler.postDelayed(runnable, 1000);
         }
@@ -408,6 +409,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
      * 开始直播
      */
     private void startLive() {
+        publisher.openCamera();
         publisher.setPreviewResolution(currentPreviewWidth, currentPreviewHeight);
         if (currentOrientation == Configuration.ORIENTATION_PORTRAIT) {
             publisher.setOutputResolution(currentPreviewHeight, currentPreviewWidth);
@@ -612,6 +614,8 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
             handleException();
         }
     };
+
+    private SrsCameraView.ErrorCallback errorCallback = error -> handleException();
 
     @Override
     protected void onDestroy() {

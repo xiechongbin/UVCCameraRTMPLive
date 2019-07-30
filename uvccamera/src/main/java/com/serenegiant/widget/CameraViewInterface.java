@@ -25,17 +25,16 @@ package com.serenegiant.widget;
 
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
-import android.view.Surface;
 
 import com.serenegiant.encoder.IVideoEncoder;
 
 public interface CameraViewInterface extends IAspectRatioView {
     interface Callback {
-        void onSurfaceCreated(CameraViewInterface view, Surface surface);
+        void onSurfaceCreated(SurfaceTexture surface, int width, int height);
 
-        void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height);
+        void onSurfaceChanged(SurfaceTexture surface, int width, int height);
 
-        void onSurfaceDestroy(CameraViewInterface view, Surface surface);
+        void onSurfaceDestroy(SurfaceTexture surface);
     }
 
     void onPause();
@@ -43,12 +42,6 @@ public interface CameraViewInterface extends IAspectRatioView {
     void onResume();
 
     void setCallback(Callback callback);
-
-    SurfaceTexture getSurfaceTexture();
-
-    Surface getSurface();
-
-    boolean hasSurface();
 
     void setVideoEncoder(IVideoEncoder encoder);
 

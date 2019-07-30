@@ -2,10 +2,12 @@ package net.ossrs.yasea;
 
 import java.util.Arrays;
 
-public final class SrsAllocator {
+public class SrsAllocator {
+    private int individualAllocationSize;
+    private volatile int availableSentinel;
+    private Allocation[] availableAllocations;
 
     public class Allocation {
-
         private byte[] data;
         private int size;
 
@@ -57,10 +59,6 @@ public final class SrsAllocator {
         }
     }
 
-    private final int individualAllocationSize;
-    private volatile int availableSentinel;
-    private Allocation[] availableAllocations;
-
     /**
      * Constructs an instance without creating any {@link Allocation}s up front.
      *
@@ -94,7 +92,6 @@ public final class SrsAllocator {
                 return ret;
             }
         }
-
         return new Allocation(size > individualAllocationSize ? size : individualAllocationSize);
     }
 

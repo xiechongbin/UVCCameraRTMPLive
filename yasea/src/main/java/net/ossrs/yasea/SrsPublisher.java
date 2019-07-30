@@ -1,6 +1,5 @@
 package net.ossrs.yasea;
 
-import android.hardware.Camera;
 import android.media.AudioRecord;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.AutomaticGainControl;
@@ -18,7 +17,7 @@ public class SrsPublisher {
     private static AcousticEchoCanceler aec;
     private static AutomaticGainControl agc;
     private byte[] mPcmBuffer = new byte[4096];
-    private Thread aworker;
+    private Thread aWorker;
     private SrsCameraView mCameraView;
     private boolean sendVideoOnly = false;
     private boolean sendAudioOnly = false;
@@ -59,12 +58,16 @@ public class SrsPublisher {
         }
     }
 
-    public void startCamera() {
-        mCameraView.startCamera();
+    public void openCamera() {
+        mCameraView.openCamera();
     }
 
-    public void stopCamera() {
-        mCameraView.stopCamera();
+    public void startPreview() {
+        mCameraView.startPreview();
+    }
+
+    public void stopPreview() {
+        mCameraView.stopPreview();
     }
 
     public void startTorch() {
@@ -95,7 +98,7 @@ public class SrsPublisher {
             }
         }
 
-        aworker = new Thread(new Runnable() {
+        aWorker = new Thread(new Runnable() {
             @Override
             public void run() {
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
@@ -118,18 +121,18 @@ public class SrsPublisher {
                 }
             }
         });
-        aworker.start();
+        aWorker.start();
     }
 
     public void stopAudio() {
-        if (aworker != null) {
-            aworker.interrupt();
+        if (aWorker != null) {
+            aWorker.interrupt();
             try {
-                aworker.join();
+                aWorker.join();
             } catch (InterruptedException e) {
-                aworker.interrupt();
+                aWorker.interrupt();
             }
-            aworker = null;
+            aWorker = null;
         }
 
         if (mic != null) {
@@ -156,14 +159,18 @@ public class SrsPublisher {
         if (!mEncoder.start()) {
             return;
         }
-        startCamera();
+        startPreview();
         startAudio();
-        mCameraView.enableEncoding();
+        if (mEncoder != null && mEncoder.isEnabled()) {
+            mCameraView.enableEncoding();
+        }
     }
 
     private void resumeEncode() {
         startAudio();
-        mCameraView.enableEncoding();
+        if (mEncoder != null && mEncoder.isEnabled()) {
+            mCameraView.enableEncoding();
+        }
     }
 
     private void pauseEncode() {
@@ -173,7 +180,7 @@ public class SrsPublisher {
     }
 
     private void stopEncode() {
-        stopCamera();
+        stopPreview();
         stopAudio();
         mEncoder.stop();
     }
@@ -248,20 +255,8 @@ public class SrsPublisher {
         mEncoder.switchToHardEncoder();
     }
 
-    public boolean isSoftEncoder() {
-        return mEncoder.isSoftEncoder();
-    }
-
-    public double getmSamplingFps() {
+    public double getSamplingFps() {
         return mSamplingFps;
-    }
-
-    public int getCameraId() {
-        return mCameraView.getCameraId();
-    }
-
-    public Camera getCamera() {
-        return mCameraView.getCamera();
     }
 
     public void setPreviewResolution(int width, int height) {
@@ -314,16 +309,13 @@ public class SrsPublisher {
     }
 
     public void switchCameraFace(int id) {
-        mCameraView.stopCamera();
+        mCameraView.stopPreview();
         mCameraView.setCameraId(id);
         if (mEncoder != null && mEncoder.isEnabled()) {
             mCameraView.enableEncoding();
         }
-        mCameraView.startCamera();
-    }
-
-    public void deleteTextures() {
-        mCameraView.deleteTextures();
+        mCameraView.openCamera();
+        mCameraView.startPreview();
     }
 
     public void setRtmpHandler(RtmpHandler handler) {
@@ -348,5 +340,9 @@ public class SrsPublisher {
         if (mMp4Muxer != null) {
             mEncoder.setMp4Muxer(mMp4Muxer);
         }
+    }
+
+    public void setErrorCallback(SrsCameraView.ErrorCallback errorCallback) {
+        mCameraView.setErrorCallback(errorCallback);
     }
 }

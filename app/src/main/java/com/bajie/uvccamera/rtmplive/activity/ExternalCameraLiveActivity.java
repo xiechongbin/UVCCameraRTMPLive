@@ -1,7 +1,7 @@
 package com.bajie.uvccamera.rtmplive.activity;
 
+import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
-import android.view.Surface;
 import android.view.WindowManager;
 
 import com.bajie.uvccamera.rtmplive.R;
@@ -82,14 +82,14 @@ public class ExternalCameraLiveActivity extends BaseActivity {
 
     private CameraViewInterface.Callback callback = new CameraViewInterface.Callback() {
         @Override
-        public void onSurfaceCreated(CameraViewInterface view, Surface surface) {
+        public void onSurfaceCreated(SurfaceTexture surface, int width, int height) {
             Logger.e("onSurfaceCreated:" + surface);
             //开启预览画面
             uvcCameraHandler.startPreview(surface);
         }
 
         @Override
-        public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height) {
+        public void onSurfaceChanged(SurfaceTexture surface, int width, int height) {
             Logger.e("onSurfaceChanged:" + surface);
             //停止后再次开启预览画面
             uvcCameraHandler.stopPreview();
@@ -97,7 +97,7 @@ public class ExternalCameraLiveActivity extends BaseActivity {
         }
 
         @Override
-        public void onSurfaceDestroy(CameraViewInterface view, Surface surface) {
+        public void onSurfaceDestroy(SurfaceTexture surface) {
             Logger.e("onSurfaceDestroy:" + surface);
             //停止预览画面
             uvcCameraHandler.stopPreview();

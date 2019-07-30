@@ -3,6 +3,33 @@ package net.ossrs.yasea;
 /**
  * Desc:直播相关配置方案
  * <p>
+ * 下面是OPPO FIND X摄像头支持的预览尺寸：
+ * <p>
+ * width:height=2340:1080
+ * width:height=2304:1728
+ * width:height=2304:1296
+ * width:height=2280:1080
+ * width:height=2048:1536
+ * width:height=1920:1440
+ * width:height=1920:1080
+ * width:height=1840:1380
+ * width:height=1600:1200
+ * width:height=1440:1080
+ * width:height=1280:400
+ * width:height=1280:960
+ * width:height=1280:768
+ * width:height=1280:720
+ * width:height=1024:738
+ * width:height=1024:768
+ * width:height=960:720
+ * width:height=800:600
+ * width:height=800:480
+ * width:height=720:480
+ * width:height=640:480
+ * width:height=352:288
+ * width:height=320:240
+ * width:height=176:144
+ * <p>
  * Created by YoungWu on 2019/7/10.
  */
 public class SrsLiveConfig {
@@ -100,32 +127,5 @@ public class SrsLiveConfig {
     /**
      * 音频采样率，44.1kHz
      */
-    public static final int AUDIO_SAMPLERATE = 44100;
-
-    /* **************************下面是OPPO FIND X摄像头支持的预览尺寸*****************************
-     * width:height=2340:1080
-     * width:height=2304:1728
-     * width:height=2304:1296
-     * width:height=2280:1080
-     * width:height=2048:1536
-     * width:height=1920:1440
-     * width:height=1920:1080
-     * width:height=1840:1380
-     * width:height=1600:1200
-     * width:height=1440:1080
-     * width:height=1280:400
-     * width:height=1280:960
-     * width:height=1280:768
-     * width:height=1280:720
-     * width:height=1024:738
-     * width:height=1024:768
-     * width:height=960:720
-     * width:height=800:600
-     * width:height=800:480
-     * width:height=720:480
-     * width:height=640:480
-     * width:height=352:288
-     * width:height=320:240
-     * width:height=176:144
-     */
+    public static final int AUDIO_SAMPLE_RATE = 44100;
 }

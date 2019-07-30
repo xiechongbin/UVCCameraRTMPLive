@@ -9,7 +9,6 @@ import java.lang.ref.WeakReference;
  * Created by leo.ma on 2016/11/4.
  */
 public class SrsEncodeHandler extends Handler {
-
     private static final int MSG_ENCODE_NETWORK_WEAK = 0;
     private static final int MSG_ENCODE_NETWORK_RESUME = 1;
     private static final int MSG_ENCODE_ILLEGAL_ARGUMENT_EXCEPTION = 2;
@@ -32,7 +31,10 @@ public class SrsEncodeHandler extends Handler {
         obtainMessage(MSG_ENCODE_ILLEGAL_ARGUMENT_EXCEPTION, e).sendToTarget();
     }
 
-    @Override  // runs on UI thread
+    /**
+     * runs on UI thread
+     */
+    @Override
     public void handleMessage(Message msg) {
         SrsEncodeListener listener = mWeakListener.get();
         if (listener == null) {

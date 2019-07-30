@@ -31,15 +31,15 @@ public class SrsEncoder {
     public static int vPortraitHeight = SrsLiveConfig.HIGH_DEFINITION_WIDTH;
     public static int vLandscapeWidth = SrsLiveConfig.HIGH_DEFINITION_WIDTH;
     public static int vLandscapeHeight = SrsLiveConfig.HIGH_DEFINITION_HEIGHT;
-    public static int vOutWidth = SrsLiveConfig.HIGH_DEFINITION_HEIGHT;   // Note: the stride of resolution must be set as 16x for hard encoding with some chip like MTK
-    public static int vOutHeight = SrsLiveConfig.HIGH_DEFINITION_WIDTH;  // Since Y component is quadruple size as U and V component, the stride must be set as 32x
+    public static int vOutWidth = SrsLiveConfig.HIGH_DEFINITION_HEIGHT;// Note: the stride of resolution must be set as 16x for hard encoding with some chip like MTK
+    public static int vOutHeight = SrsLiveConfig.HIGH_DEFINITION_WIDTH;// Since Y component is quadruple size as U and V component, the stride must be set as 32x
 
     public static int vBitrate = SrsLiveConfig.HIGH_DEFINITION_BITRATE;//视频比特率
     public static int vFPS = SrsLiveConfig.NORMAL_FPS;//视频帧率
     public static final int vGOP = SrsLiveConfig.GOP;//I帧间隔周期
 
     public static int aBitrate = SrsLiveConfig.HIGH_QUALITY_BITRATE;//音频比特率
-    public static final int aSampleRate = SrsLiveConfig.AUDIO_SAMPLERATE;//音频采样率
+    public static final int aSampleRate = SrsLiveConfig.AUDIO_SAMPLE_RATE;//音频采样率
     public static int aChannelConfig = AudioFormat.CHANNEL_IN_STEREO;//立体声通道
 
     private SrsEncodeHandler mHandler;
@@ -47,16 +47,16 @@ public class SrsEncoder {
     private SrsFlvMuxer flvMuxer;
     private SrsMp4Muxer mp4Muxer;
 
-    private MediaCodecInfo vmci;
-    private MediaCodec vencoder;
-    private MediaCodec aencoder;
+    private MediaCodecInfo vMci;
+    private MediaCodec vEncoder;
+    private MediaCodec aEncoder;
 
     private boolean networkWeakTriggered = false;
     private boolean useSoftEncoder = false;
     private boolean canSoftEncode = false;
 
-    private long mPresentTimeUs;
-    private long mPausetime;
+    private long mPresentTime;
+    private long mPauseTime;
 
     private int mVideoColorFormat;
 
@@ -95,12 +95,12 @@ public class SrsEncoder {
         }
 
         // the referent PTS for video and audio encoder.
-        mPresentTimeUs = System.nanoTime() / 1000;
+        mPresentTime = System.nanoTime() / 1000;
 
         // Note: the stride of resolution must be set as 16x for hard encoding with some chip like MTK
         // Since Y component is quadruple size as U and V component, the stride must be set as 32x
         if (!useSoftEncoder && (vOutWidth % 32 != 0 || vOutHeight % 32 != 0)) {
-            if (vmci.getName().contains("MTK")) {
+            if (vMci.getName().contains("MTK")) {
 //                throw new AssertionError("MTK encoding revolution stride must be 32x");
             }
         }
@@ -123,38 +123,38 @@ public class SrsEncoder {
             }
         }
 
-        // aencoder pcm to aac raw stream.
+        // aEncoder pcm to aac raw stream.
         // requires sdk level 16+, Android 4.1, 4.1.1, the JELLY_BEAN
         try {
-            aencoder = MediaCodec.createEncoderByType(aCodec);
+            aEncoder = MediaCodec.createEncoderByType(aCodec);
         } catch (IOException e) {
-            if (DEBUG) Log.e(TAG, "create aencoder failed.");
+            if (DEBUG) Log.e(TAG, "create aEncoder failed.");
             e.printStackTrace();
             return false;
         }
 
-        // setup the aencoder.
+        // setup the aEncoder.
         // @see https://developer.android.com/reference/android/media/MediaCodec.html
         int ach = aChannelConfig == AudioFormat.CHANNEL_IN_STEREO ? 2 : 1;
         MediaFormat audioFormat = MediaFormat.createAudioFormat(aCodec, aSampleRate, ach);
         audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, aBitrate);
         audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 0);
-        aencoder.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        aEncoder.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         // add the audio tracker to muxer.
         audioFlvTrack = flvMuxer.addTrack(audioFormat);
         audioMp4Track = mp4Muxer.addTrack(audioFormat);
 
-        // vencoder yuv to 264 es stream.
+        // vEncoder yuv to 264 es stream.
         // requires sdk level 16+, Android 4.1, 4.1.1, the JELLY_BEAN
         try {
-            vencoder = MediaCodec.createByCodecName(vmci.getName());
+            vEncoder = MediaCodec.createByCodecName(vMci.getName());
         } catch (IOException e) {
-            if (DEBUG) Log.e(TAG, "create vencoder failed.");
+            if (DEBUG) Log.e(TAG, "create vEncoder failed.");
             e.printStackTrace();
             return false;
         }
 
-        // setup the vencoder.
+        // setup the vEncoder.
         // Note: landscape to portrait, 90 degree rotation, so we need to switch width and height in configuration
         MediaFormat videoFormat = MediaFormat.createVideoFormat(vCodec, vOutWidth, vOutHeight);
         videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, mVideoColorFormat);
@@ -162,25 +162,25 @@ public class SrsEncoder {
         videoFormat.setInteger(MediaFormat.KEY_BIT_RATE, vBitrate);
         videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, vFPS);
         videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, vGOP);
-        vencoder.configure(videoFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        vEncoder.configure(videoFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         // add the video tracker to muxer.
         videoFlvTrack = flvMuxer.addTrack(videoFormat);
         videoMp4Track = mp4Muxer.addTrack(videoFormat);
 
         // start device and encoder.
-        vencoder.start();
-        aencoder.start();
+        vEncoder.start();
+        aEncoder.start();
         return true;
     }
 
     public void pause() {
-        mPausetime = System.nanoTime() / 1000;
+        mPauseTime = System.nanoTime() / 1000;
     }
 
     public void resume() {
-        long resumeTime = (System.nanoTime() / 1000) - mPausetime;
-        mPresentTimeUs = mPresentTimeUs + resumeTime;
-        mPausetime = 0;
+        long resumeTime = (System.nanoTime() / 1000) - mPauseTime;
+        mPresentTime = mPresentTime + resumeTime;
+        mPauseTime = 0;
     }
 
     public void stop() {
@@ -189,26 +189,26 @@ public class SrsEncoder {
             canSoftEncode = false;
         }
 
-        if (aencoder != null) {
-            if (DEBUG) Log.i(TAG, "stop aencoder");
+        if (aEncoder != null) {
+            if (DEBUG) Log.i(TAG, "stop aEncoder");
             try {
-                aencoder.stop();
+                aEncoder.stop();
             } catch (IllegalStateException e) {
                 e.printStackTrace();
             }
-            aencoder.release();
-            aencoder = null;
+            aEncoder.release();
+            aEncoder = null;
         }
 
-        if (vencoder != null) {
-            if (DEBUG) Log.i(TAG, "stop vencoder");
+        if (vEncoder != null) {
+            if (DEBUG) Log.i(TAG, "stop vEncoder");
             try {
-                vencoder.stop();
+                vEncoder.stop();
             } catch (IllegalStateException e) {
                 e.printStackTrace();
             }
-            vencoder.release();
-            vencoder = null;
+            vEncoder.release();
+            vEncoder = null;
         }
     }
 
@@ -220,12 +220,8 @@ public class SrsEncoder {
         useSoftEncoder = false;
     }
 
-    public boolean isSoftEncoder() {
-        return useSoftEncoder;
-    }
-
     public boolean canHardEncode() {
-        return vencoder != null;
+        return vEncoder != null;
     }
 
     public boolean canSoftEncode() {
@@ -295,7 +291,7 @@ public class SrsEncoder {
         // Note: the stride of resolution must be set as 16x for hard encoding with some chip like MTK
         // Since Y component is quadruple size as U and V component, the stride must be set as 32x
         if (!useSoftEncoder && (vOutWidth % 32 != 0 || vOutHeight % 32 != 0)) {
-            if (vmci.getName().contains("MTK")) {
+            if (vMci.getName().contains("MTK")) {
 //                throw new AssertionError("MTK encoding revolution stride must be 32x");
             }
         }
@@ -304,24 +300,24 @@ public class SrsEncoder {
     }
 
     private void onProcessedYuvFrame(byte[] yuvFrame, long pts) {
-        ByteBuffer[] inBuffers = vencoder.getInputBuffers();
-        ByteBuffer[] outBuffers = vencoder.getOutputBuffers();
+        ByteBuffer[] inBuffers = vEncoder.getInputBuffers();
+        ByteBuffer[] outBuffers = vEncoder.getOutputBuffers();
 
-        int inBufferIndex = vencoder.dequeueInputBuffer(-1);
+        int inBufferIndex = vEncoder.dequeueInputBuffer(-1);
         if (inBufferIndex >= 0) {
             ByteBuffer bb = inBuffers[inBufferIndex];
             bb.clear();
             bb.put(yuvFrame, 0, yuvFrame.length);
-            vencoder.queueInputBuffer(inBufferIndex, 0, yuvFrame.length, pts, 0);
+            vEncoder.queueInputBuffer(inBufferIndex, 0, yuvFrame.length, pts, 0);
         }
 
         for (; ; ) {
-            MediaCodec.BufferInfo vebi = new MediaCodec.BufferInfo();
-            int outBufferIndex = vencoder.dequeueOutputBuffer(vebi, 0);
+            MediaCodec.BufferInfo vEbi = new MediaCodec.BufferInfo();
+            int outBufferIndex = vEncoder.dequeueOutputBuffer(vEbi, 0);
             if (outBufferIndex >= 0) {
                 ByteBuffer bb = outBuffers[outBufferIndex];
-                onEncodedAnnexbFrame(bb, vebi);
-                vencoder.releaseOutputBuffer(outBufferIndex, false);
+                onEncodedAnnexBFrame(bb, vEbi);
+                vEncoder.releaseOutputBuffer(outBufferIndex, false);
             } else {
                 break;
             }
@@ -329,54 +325,52 @@ public class SrsEncoder {
     }
 
     /**
-     * libenc.cc里面的（libenc_RGBASoftEncode函数）会调用到此方法
+     * libenc.cc里面的（libenc_RGBASoftEncode函数）会调用到此方法，用于软件编码
      */
     private void onSoftEncodedData(byte[] es, long pts, boolean isKeyFrame) {
         ByteBuffer bb = ByteBuffer.wrap(es);
-        MediaCodec.BufferInfo vebi = new MediaCodec.BufferInfo();
-        vebi.offset = 0;
-        vebi.size = es.length;
-        vebi.presentationTimeUs = pts;
-        vebi.flags = isKeyFrame ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
-        onEncodedAnnexbFrame(bb, vebi);
+        MediaCodec.BufferInfo vEbi = new MediaCodec.BufferInfo();
+        vEbi.offset = 0;
+        vEbi.size = es.length;
+        vEbi.presentationTimeUs = pts;
+        vEbi.flags = isKeyFrame ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
+        onEncodedAnnexBFrame(bb, vEbi);
     }
 
-    // when got encoded h264 es stream.
-    private void onEncodedAnnexbFrame(ByteBuffer es, MediaCodec.BufferInfo bi) {
+    /**
+     * when got encoded h264 es stream.
+     */
+    private void onEncodedAnnexBFrame(ByteBuffer es, MediaCodec.BufferInfo bi) {
         mp4Muxer.writeSampleData(videoMp4Track, es.duplicate(), bi);
         flvMuxer.writeSampleData(videoFlvTrack, es, bi);
     }
 
-    // when got encoded aac raw stream.
-    private void onEncodedAacFrame(ByteBuffer es, MediaCodec.BufferInfo bi) {
-        mp4Muxer.writeSampleData(audioMp4Track, es.duplicate(), bi);
-        flvMuxer.writeSampleData(audioFlvTrack, es, bi);
-    }
-
+    /**
+     * Check audio frame cache number to judge the networking situation.
+     * Just cache GOP / FPS seconds data according to latency.
+     */
     public void onGetPcmFrame(byte[] data, int size) {
-        // Check video frame cache number to judge the networking situation.
-        // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
         if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
-            ByteBuffer[] inBuffers = aencoder.getInputBuffers();
-            ByteBuffer[] outBuffers = aencoder.getOutputBuffers();
+            ByteBuffer[] inBuffers = aEncoder.getInputBuffers();
+            ByteBuffer[] outBuffers = aEncoder.getOutputBuffers();
 
-            int inBufferIndex = aencoder.dequeueInputBuffer(-1);
+            int inBufferIndex = aEncoder.dequeueInputBuffer(-1);
             if (inBufferIndex >= 0) {
                 ByteBuffer bb = inBuffers[inBufferIndex];
                 bb.clear();
                 bb.put(data, 0, size);
-                long pts = System.nanoTime() / 1000 - mPresentTimeUs;
-                aencoder.queueInputBuffer(inBufferIndex, 0, size, pts, 0);
+                long pts = System.nanoTime() / 1000 - mPresentTime;
+                aEncoder.queueInputBuffer(inBufferIndex, 0, size, pts, 0);
             }
 
             for (; ; ) {
-                MediaCodec.BufferInfo aebi = new MediaCodec.BufferInfo();
-                int outBufferIndex = aencoder.dequeueOutputBuffer(aebi, 0);
+                MediaCodec.BufferInfo aEbi = new MediaCodec.BufferInfo();
+                int outBufferIndex = aEncoder.dequeueOutputBuffer(aEbi, 0);
                 if (outBufferIndex >= 0) {
                     ByteBuffer bb = outBuffers[outBufferIndex];
-                    onEncodedAacFrame(bb, aebi);
-                    aencoder.releaseOutputBuffer(outBufferIndex, false);
+                    onEncodedAacFrame(bb, aEbi);
+                    aEncoder.releaseOutputBuffer(outBufferIndex, false);
                 } else {
                     break;
                 }
@@ -384,12 +378,22 @@ public class SrsEncoder {
         }
     }
 
+    /**
+     * when got encoded aac raw stream.
+     */
+    private void onEncodedAacFrame(ByteBuffer es, MediaCodec.BufferInfo bi) {
+        mp4Muxer.writeSampleData(audioMp4Track, es.duplicate(), bi);
+        flvMuxer.writeSampleData(audioFlvTrack, es, bi);
+    }
+
+    /**
+     * Check video frame cache number to judge the networking situation.
+     * Just cache GOP / FPS seconds data according to latency.
+     */
     public void onGetRgbaFrame(byte[] data, int width, int height) {
-        // Check video frame cache number to judge the networking situation.
-        // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
         if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
-            long pts = System.nanoTime() / 1000 - mPresentTimeUs;
+            long pts = System.nanoTime() / 1000 - mPresentTime;
             if (useSoftEncoder) {
                 swRgbaFrame(data, width, height, pts);
             } else {
@@ -411,31 +415,14 @@ public class SrsEncoder {
         }
     }
 
-    public void onGetYuvFrame(byte[] data) {
-        // Check video frame cache number to judge the networking situation.
-        // Just cache GOP / FPS seconds data according to latency.
-        AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
-        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
-            long pts = System.nanoTime() / 1000 - mPresentTimeUs;
-
-            onProcessedYuvFrame(data, pts);
-
-            if (networkWeakTriggered) {
-                networkWeakTriggered = false;
-                mHandler.notifyNetworkResume();
-            }
-        } else {
-            mHandler.notifyNetworkWeak();
-            networkWeakTriggered = true;
-        }
-    }
-
+    /**
+     * Check video frame cache number to judge the networking situation.
+     * Just cache GOP / FPS seconds data according to latency.
+     */
     public void onGetYuvNV21Frame(byte[] data, int width, int height, Rect boundingBox) {
-        // Check video frame cache number to judge the networking situation.
-        // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
         if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
-            long pts = System.nanoTime() / 1000 - mPresentTimeUs;
+            long pts = System.nanoTime() / 1000 - mPresentTime;
             if (useSoftEncoder) {
                 throw new UnsupportedOperationException("Not implemented");
             } else {
@@ -457,12 +444,14 @@ public class SrsEncoder {
         }
     }
 
+    /**
+     * Check video frame cache number to judge the networking situation.
+     * Just cache GOP / FPS seconds data according to latency.
+     */
     public void onGetArgbFrame(int[] data, int width, int height, Rect boundingBox) {
-        // Check video frame cache number to judge the networking situation.
-        // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
         if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
-            long pts = System.nanoTime() / 1000 - mPresentTimeUs;
+            long pts = System.nanoTime() / 1000 - mPresentTime;
             if (useSoftEncoder) {
                 throw new UnsupportedOperationException("Not implemented");
             } else {
@@ -484,12 +473,14 @@ public class SrsEncoder {
         }
     }
 
+    /**
+     * Check video frame cache number to judge the networking situation.
+     * Just cache GOP / FPS seconds data according to latency.
+     */
     public void onGetArgbFrame(int[] data, int width, int height) {
-        // Check video frame cache number to judge the networking situation.
-        // Just cache GOP / FPS seconds data according to latency.
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
         if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
-            long pts = System.nanoTime() / 1000 - mPresentTimeUs;
+            long pts = System.nanoTime() / 1000 - mPresentTime;
             if (useSoftEncoder) {
                 throw new UnsupportedOperationException("Not implemented");
             } else {
@@ -583,7 +574,9 @@ public class SrsEncoder {
         return pcmBufSize - (pcmBufSize % 8192);
     }
 
-    // choose the video encoder by name.
+    /**
+     * choose the video encoder by name.
+     */
     private MediaCodecInfo chooseVideoEncoder(String name) {
         int nbCodecs = MediaCodecList.getCodecCount();
         for (int i = 0; i < nbCodecs; i++) {
@@ -591,46 +584,49 @@ public class SrsEncoder {
             if (!mci.isEncoder()) {
                 continue;
             }
-
             String[] types = mci.getSupportedTypes();
-            for (int j = 0; j < types.length; j++) {
-                if (types[j].equalsIgnoreCase(vCodec)) {
+            for (String type : types) {
+                if (type.equalsIgnoreCase(vCodec)) {
                     if (DEBUG)
-                        Log.i(TAG, String.format("vencoder %s types: %s", mci.getName(), types[j]));
+                        Log.i(TAG, String.format("vEncoder %s types: %s", mci.getName(), type));
                     if (name == null) {
                         return mci;
                     }
-
                     if (mci.getName().contains(name)) {
                         return mci;
                     }
                 }
             }
         }
-
         return null;
     }
 
-    // choose the right supported color format. @see below:
+    /**
+     * choose the right supported color format. @see below:
+     * <p>
+     * choose the encoder "video/avc":
+     * 1. select default one when type matched.
+     * 2. google avc is unusable.
+     * 3. choose qcom avc.
+     */
     private int chooseVideoEncoder() {
-        // choose the encoder "video/avc":
-        //      1. select default one when type matched.
-        //      2. google avc is unusable.
-        //      3. choose qcom avc.
-        vmci = chooseVideoEncoder(null);
+        vMci = chooseVideoEncoder(null);
         //vmci = chooseVideoEncoder("google");
         //vmci = chooseVideoEncoder("qcom");
 
         int matchedColorFormat = 0;
-        MediaCodecInfo.CodecCapabilities cc = vmci.getCapabilitiesForType(vCodec);
+        if (vMci == null) {
+            return matchedColorFormat;
+        }
+        MediaCodecInfo.CodecCapabilities cc = vMci.getCapabilitiesForType(vCodec);
         for (int i = 0; i < cc.colorFormats.length; i++) {
             int cf = cc.colorFormats[i];
             if (DEBUG)
-                Log.i(TAG, String.format("vencoder %s supports color fomart 0x%x(%d)", vmci.getName(), cf, cf));
+                Log.i(TAG, String.format("vEncoder %s supports color fomart 0x%x(%d)", vMci.getName(), cf, cf));
 
             // choose YUV for h.264, prefer the bigger one.
             // corresponding to the color space transform in onPreviewFrame
-            if (cf >= cc.COLOR_FormatYUV420Planar && cf <= cc.COLOR_FormatYUV420SemiPlanar) {
+            if (cf >= MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar && cf <= MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
                 if (cf > matchedColorFormat) {
                     matchedColorFormat = cf;
                 }
@@ -640,22 +636,23 @@ public class SrsEncoder {
         for (int i = 0; i < cc.profileLevels.length; i++) {
             MediaCodecInfo.CodecProfileLevel pl = cc.profileLevels[i];
             if (DEBUG)
-                Log.i(TAG, String.format("vencoder %s support profile %d, level %d", vmci.getName(), pl.profile, pl.level));
+                Log.i(TAG, String.format("vEncoder %s support profile %d, level %d", vMci.getName(), pl.profile, pl.level));
         }
 
         if (DEBUG)
-            Log.i(TAG, String.format("vencoder %s choose color format 0x%x(%d)", vmci.getName(), matchedColorFormat, matchedColorFormat));
+            Log.i(TAG, String.format("vEncoder %s choose color format 0x%x(%d)", vMci.getName(), matchedColorFormat, matchedColorFormat));
         return matchedColorFormat;
     }
 
-    // the color transform, @see http://stackoverflow.com/questions/15739684/mediacodec-and-camera-color-space-incorrect
-    private static byte[] YV12toYUV420PackedSemiPlanar(final byte[] input, final byte[] output, final int width, final int height) {
-        /*
-         * COLOR_TI_FormatYUV420PackedSemiPlanar is NV12
-         * We convert by putting the corresponding U and V bytes together (interleaved).
-         */
-        final int frameSize = width * height;
-        final int qFrameSize = frameSize / 4;
+    /**
+     * COLOR_TI_FormatYUV420PackedSemiPlanar is NV12
+     * We convert by putting the corresponding U and V bytes together (interleaved).
+     * <p>
+     * the color transform, @see http://stackoverflow.com/questions/15739684/mediacodec-and-camera-color-space-incorrect
+     */
+    public static byte[] YV12toYUV420PackedSemiPlanar(byte[] input, byte[] output, int width, int height) {
+        int frameSize = width * height;
+        int qFrameSize = frameSize / 4;
 
         System.arraycopy(input, 0, output, 0, frameSize); // Y
 
@@ -666,13 +663,13 @@ public class SrsEncoder {
         return output;
     }
 
-    private static byte[] YV12toYUV420Planar(byte[] input, byte[] output, int width, int height) {
-        /*
-         * COLOR_FormatYUV420Planar is I420 which is like YV12, but with U and V reversed.
-         * So we just have to reverse U and V.
-         */
-        final int frameSize = width * height;
-        final int qFrameSize = frameSize / 4;
+    /**
+     * COLOR_FormatYUV420Planar is I420 which is like YV12, but with U and V reversed.
+     * So we just have to reverse U and V.
+     */
+    public static byte[] YV12toYUV420Planar(byte[] input, byte[] output, int width, int height) {
+        int frameSize = width * height;
+        int qFrameSize = frameSize / 4;
 
         System.arraycopy(input, 0, output, 0, frameSize); // Y
         System.arraycopy(input, frameSize, output, frameSize + qFrameSize, qFrameSize); // Cr (V)

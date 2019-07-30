@@ -31,7 +31,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Surface;
 import android.view.TextureView;
 
 import com.serenegiant.encoder.IVideoEncoder;
@@ -82,7 +81,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
     public void onResume() {
         if (DEBUG) Log.v(TAG, "onResume:");
         if (mHasSurface) {
-            mRenderHandler = RenderHandler.createHandler(mFpsCounter, super.getSurfaceTexture(), getWidth(), getHeight());
+            mRenderHandler = RenderHandler.createHandler(mFpsCounter, getRealSurfaceTexture(), getWidth(), getHeight());
         }
     }
 
@@ -93,7 +92,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
             mRenderHandler.release();
             mRenderHandler = null;
         }
-        if (mTempBitmap != null) {
+        if (mTempBitmap != null && !mTempBitmap.isRecycled()) {
             mTempBitmap.recycle();
             mTempBitmap = null;
         }
@@ -101,7 +100,9 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        if (DEBUG) Log.v(TAG, "onSurfaceTextureAvailable:" + surface);
+        if (DEBUG) {
+            Log.v(TAG, "onSurfaceTextureAvailable:" + surface + "," + width + ",height=" + height);
+        }
         if (mRenderHandler == null) {
             mRenderHandler = RenderHandler.createHandler(mFpsCounter, surface, width, height);
         } else {
@@ -109,18 +110,20 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
         }
         mHasSurface = true;
         if (mCallback != null) {
-            mCallback.onSurfaceCreated(this, getSurface());
+            mCallback.onSurfaceCreated(surface, width, height);
         }
     }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        if (DEBUG) Log.v(TAG, "onSurfaceTextureSizeChanged:" + surface);
+        if (DEBUG) {
+            Log.v(TAG, "onSurfaceTextureSizeChanged:" + surface + "," + width + ",height=" + height);
+        }
         if (mRenderHandler != null) {
             mRenderHandler.resize(width, height);
         }
         if (mCallback != null) {
-            mCallback.onSurfaceChanged(this, getSurface(), width, height);
+            mCallback.onSurfaceChanged(getRealSurfaceTexture(), width, height);
         }
     }
 
@@ -133,7 +136,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
         }
         mHasSurface = false;
         if (mCallback != null) {
-            mCallback.onSurfaceDestroy(this, getSurface());
+            mCallback.onSurfaceDestroy(getRealSurfaceTexture());
         }
         if (mPreviewSurface != null) {
             mPreviewSurface.release();
@@ -147,18 +150,14 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
         synchronized (mCaptureSync) {
             if (mRequestCaptureStillImage) {
                 mRequestCaptureStillImage = false;
-                if (mTempBitmap == null)
+                if (mTempBitmap == null) {
                     mTempBitmap = getBitmap();
-                else
+                } else {
                     getBitmap(mTempBitmap);
+                }
                 mCaptureSync.notifyAll();
             }
         }
-    }
-
-    @Override
-    public boolean hasSurface() {
-        return mHasSurface;
     }
 
     /**
@@ -182,29 +181,20 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
         }
     }
 
-    @Override
-    public SurfaceTexture getSurfaceTexture() {
-        return mRenderHandler != null ? mRenderHandler.getPreviewTexture() : null;
-    }
+    private SurfaceTexture mPreviewSurface;
 
-    private Surface mPreviewSurface;
-
-    @Override
-    public Surface getSurface() {
-        if (DEBUG) Log.v(TAG, "getSurface:hasSurface=" + mHasSurface);
+    public SurfaceTexture getRealSurfaceTexture() {
         if (mPreviewSurface == null) {
-            SurfaceTexture st = getSurfaceTexture();
-            if (st != null) {
-                mPreviewSurface = new Surface(st);
-            }
+            mPreviewSurface = mRenderHandler != null ? mRenderHandler.getPreviewTexture() : null;
         }
         return mPreviewSurface;
     }
 
     @Override
     public void setVideoEncoder(IVideoEncoder encoder) {
-        if (mRenderHandler != null)
+        if (mRenderHandler != null) {
             mRenderHandler.setVideoEncoder(encoder);
+        }
     }
 
     @Override
@@ -340,8 +330,6 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                     }
                     mThread = null;
                     break;
-                default:
-                    super.handleMessage(msg);
             }
         }
 
@@ -368,7 +356,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
             /**
              * constructor
              *
-             * @param surface: drawing surface came from TexureView
+             * @param surface: drawing surface came from TextureView
              */
             public RenderThread(FpsCounter fpsCounter, SurfaceTexture surface, int width, int height) {
                 mFpsCounter = fpsCounter;
@@ -447,10 +435,11 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                 // notify video encoder if it exist
                 if (mEncoder != null) {
                     // notify to capturing thread that the camera frame is available.
-                    if (mEncoder instanceof MediaVideoEncoder)
+                    if (mEncoder instanceof MediaVideoEncoder) {
                         ((MediaVideoEncoder) mEncoder).frameAvailableSoon(mStMatrix);
-                    else
+                    } else {
                         mEncoder.frameAvailableSoon();
+                    }
                 }
                 // draw to preview screen
                 mDrawer.draw(mTexId, mStMatrix, 0);

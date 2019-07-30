@@ -10,13 +10,11 @@ import java.lang.ref.WeakReference;
  * Created by leo.ma on 2016/11/4.
  */
 public class SrsRecordHandler extends Handler {
-
     private static final int MSG_RECORD_PAUSE = 0;
     private static final int MSG_RECORD_RESUME = 1;
     private static final int MSG_RECORD_STARTED = 2;
     private static final int MSG_RECORD_FINISHED = 3;
-
-    private static final int MSG_RECORD_ILLEGEL_ARGUMENT_EXCEPTION = 4;
+    private static final int MSG_RECORD_ILLEGAL_ARGUMENT_EXCEPTION = 4;
     private static final int MSG_RECORD_IO_EXCEPTION = 5;
 
     private WeakReference<SrsRecordListener> mWeakListener;
@@ -42,14 +40,17 @@ public class SrsRecordHandler extends Handler {
     }
 
     public void notifyRecordIllegalArgumentException(IllegalArgumentException e) {
-        obtainMessage(MSG_RECORD_ILLEGEL_ARGUMENT_EXCEPTION, e).sendToTarget();
+        obtainMessage(MSG_RECORD_ILLEGAL_ARGUMENT_EXCEPTION, e).sendToTarget();
     }
 
     public void notifyRecordIOException(IOException e) {
         obtainMessage(MSG_RECORD_IO_EXCEPTION, e).sendToTarget();
     }
 
-    @Override  // runs on UI thread
+    /**
+     * runs on UI thread
+     */
+    @Override
     public void handleMessage(Message msg) {
         SrsRecordListener listener = mWeakListener.get();
         if (listener == null) {
@@ -69,7 +70,7 @@ public class SrsRecordHandler extends Handler {
             case MSG_RECORD_FINISHED:
                 listener.onRecordFinished((String) msg.obj);
                 break;
-            case MSG_RECORD_ILLEGEL_ARGUMENT_EXCEPTION:
+            case MSG_RECORD_ILLEGAL_ARGUMENT_EXCEPTION:
                 listener.onRecordIllegalArgumentException((IllegalArgumentException) msg.obj);
                 break;
             case MSG_RECORD_IO_EXCEPTION:

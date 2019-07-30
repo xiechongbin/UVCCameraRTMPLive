@@ -54,6 +54,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -61,9 +62,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Created by LeoMa on 2016/5/21.
  */
 public class SrsMp4Muxer {
+    private static final String TAG = "SrsMp4Muxer";
     private static final boolean DEBUG = false;
 
-    private static final String TAG = "SrsMp4Muxer";
     private static final int VIDEO_TRACK = 100;
     private static final int AUDIO_TRACK = 101;
 
@@ -218,7 +219,7 @@ public class SrsMp4Muxer {
     }
 
     /**
-     * send the annexb frame to SRS over RTMP.
+     * send the annexB frame to SRS over RTMP.
      *
      * @param trackIndex The track index for this sample.
      * @param byteBuf    The encoded sample.
@@ -282,7 +283,7 @@ public class SrsMp4Muxer {
             writeFrameByte(VIDEO_TRACK, bb, bi, nal_unit_type == SrsAvcNaluType.IDR);
         } else {
             while (bb.position() < bi.size) {
-                SrsEsFrameBytes frame = avc.annexb_demux(bb, bi);
+                SrsEsFrameBytes frame = avc.annexB_demux(bb, bi);
 
                 if (avc.is_sps(frame)) {
                     if (!frame.data.equals(h264_sps)) {
@@ -342,9 +343,9 @@ public class SrsMp4Muxer {
     }
 
     /**
-     * the search result for annexb.
+     * the search result for annexB.
      */
-    private class SrsAnnexbSearch {
+    private class SrsAnnexBSearch {
         public int nb_start_code = 0;
         public boolean match = false;
     }
@@ -376,7 +377,7 @@ public class SrsMp4Muxer {
     }
 
     /**
-     * the raw h.264 stream, in annexb.
+     * the raw h.264 stream, in annexB.
      */
     private class SrsRawH264Stream {
         public boolean is_sps(SrsEsFrameBytes frame) {
@@ -394,8 +395,8 @@ public class SrsMp4Muxer {
             return (frame.data.get(0) & 0x1f) == SrsAvcNaluType.PPS;
         }
 
-        public SrsAnnexbSearch srs_avc_startswith_annexb(ByteBuffer bb, MediaCodec.BufferInfo bi) {
-            SrsAnnexbSearch as = new SrsAnnexbSearch();
+        public SrsAnnexBSearch srs_avc_start_with_annexB(ByteBuffer bb, MediaCodec.BufferInfo bi) {
+            SrsAnnexBSearch as = new SrsAnnexBSearch();
             as.match = false;
 
             int pos = bb.position();
@@ -418,17 +419,17 @@ public class SrsMp4Muxer {
             return as;
         }
 
-        public SrsEsFrameBytes annexb_demux(ByteBuffer bb, MediaCodec.BufferInfo bi) {
+        public SrsEsFrameBytes annexB_demux(ByteBuffer bb, MediaCodec.BufferInfo bi) {
             SrsEsFrameBytes tbb = new SrsEsFrameBytes();
 
             while (bb.position() < bi.size) {
-                // each frame must prefixed by annexb format.
-                // about annexb, @see H.264-AVC-ISO_IEC_14496-10.pdf, page 211.
-                SrsAnnexbSearch tbbsc = srs_avc_startswith_annexb(bb, bi);
+                // each frame must prefixed by annexB format.
+                // about annexB, @see H.264-AVC-ISO_IEC_14496-10.pdf, page 211.
+                SrsAnnexBSearch tbbsc = srs_avc_start_with_annexB(bb, bi);
                 if (!tbbsc.match || tbbsc.nb_start_code < 3) {
-                    if (DEBUG) Log.e(TAG, "annexb not match.");
+                    if (DEBUG) Log.e(TAG, "annexB not match.");
                     mHandler.notifyRecordIllegalArgumentException(new IllegalArgumentException(
-                            String.format("annexb not match for %dB, pos=%d", bi.size, bb.position())));
+                            String.format(Locale.CHINESE, "annexB not match for %dB, pos=%d", bi.size, bb.position())));
                 }
 
                 // the start codes.
@@ -441,7 +442,7 @@ public class SrsMp4Muxer {
                 tbb.data = bb.slice();
                 int pos = bb.position();
                 while (bb.position() < bi.size) {
-                    SrsAnnexbSearch bsc = srs_avc_startswith_annexb(bb, bi);
+                    SrsAnnexBSearch bsc = srs_avc_start_with_annexB(bb, bi);
                     if (bsc.match) {
                         break;
                     }
