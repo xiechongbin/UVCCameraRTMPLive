@@ -477,7 +477,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
         public void handleStartPreview(Object surface) {
             if (DEBUG) Log.v(TAG_THREAD, "handleStartPreview:surface=" + surface);
             if ((mUVCCamera == null) || mIsPreviewing) {
-                Log.d(TAG_THREAD, "mUVCCamera=null");
                 return;
             }
             try {
@@ -530,7 +529,14 @@ abstract class AbstractUVCCameraHandler extends Handler {
             if (parent == null) return;
             mSoundPool.play(mSoundId, 0.2f, 0.2f, 0, 0, 1.0f);    // play shutter sound
             try {
-                Bitmap bitmap = mWeakCameraView.get().captureStillImage();
+                CameraViewInterface cameraViewInterface = mWeakCameraView.get();
+                if (cameraViewInterface == null) {
+                    return;
+                }
+                Bitmap bitmap = cameraViewInterface.captureStillImage();
+                if (bitmap == null) {
+                    return;
+                }
                 // get buffered output stream for saving a captured still image as a file on external storage.
                 // the file name is came from current time.
                 // You should use extension name as same as CompressFormat when calling Bitmap#compress.
@@ -558,7 +564,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
             if (DEBUG) Log.v(TAG_THREAD, "handleStartRecording:mEncoderType=" + mEncoderType);
             try {
                 if ((mUVCCamera == null) || (mMuxer != null)) {
-                    Log.d(TAG_THREAD, "mUVCCamera=null");
                     return;
                 }
                 MediaMuxerWrapper muxer = new MediaMuxerWrapper(".mp4");    // if you record audio only, ".m4a" is also OK.
@@ -605,10 +610,9 @@ abstract class AbstractUVCCameraHandler extends Handler {
                     mUVCCamera.stopCapture();
                 }
             }
-            try {
-                mWeakCameraView.get().setVideoEncoder(null);
-            } catch (Exception e) {
-                // ignore
+            CameraViewInterface cameraViewInterface = mWeakCameraView.get();
+            if (cameraViewInterface != null) {
+                cameraViewInterface.setVideoEncoder(null);
             }
             if (muxer != null) {
                 muxer.stopRecording();
@@ -676,14 +680,16 @@ abstract class AbstractUVCCameraHandler extends Handler {
                 if (DEBUG) Log.v(TAG_THREAD, "onPrepared:encoder=" + encoder);
                 mIsRecording = true;
                 if (encoder instanceof MediaVideoEncoder) {
-                    try {
-                        mWeakCameraView.get().setVideoEncoder((MediaVideoEncoder) encoder);
-                    } catch (Exception e) {
-                        Log.e(TAG_THREAD, "onPrepared:", e);
+                    CameraViewInterface cameraViewInterface = mWeakCameraView.get();
+                    if (cameraViewInterface != null) {
+                        cameraViewInterface.setVideoEncoder((MediaVideoEncoder) encoder);
                     }
                 } else if (encoder instanceof MediaSurfaceEncoder) {
+                    CameraViewInterface cameraViewInterface = mWeakCameraView.get();
+                    if (cameraViewInterface != null) {
+                        cameraViewInterface.setVideoEncoder((MediaSurfaceEncoder) encoder);
+                    }
                     try {
-                        mWeakCameraView.get().setVideoEncoder((MediaSurfaceEncoder) encoder);
                         if (mUVCCamera != null) {
                             mUVCCamera.startCapture(((MediaSurfaceEncoder) encoder).getInputSurface());
                         }
@@ -701,7 +707,10 @@ abstract class AbstractUVCCameraHandler extends Handler {
                     try {
                         mIsRecording = false;
                         Activity parent = mWeakParent.get();
-                        mWeakCameraView.get().setVideoEncoder(null);
+                        CameraViewInterface cameraViewInterface = mWeakCameraView.get();
+                        if (cameraViewInterface != null) {
+                            cameraViewInterface.setVideoEncoder(null);
+                        }
                         synchronized (mSync) {
                             if (mUVCCamera != null) {
                                 mUVCCamera.stopCapture();

@@ -41,7 +41,7 @@ import java.util.List;
 
 public class UVCCamera {
     private static final boolean DEBUG = false;
-    private static final String TAG = UVCCamera.class.getSimpleName();
+    private static final String TAG = "UVCCamera";
     private static final String DEFAULT_USBFS = "/dev/bus/usb";
 
     public static final int DEFAULT_PREVIEW_WIDTH = 1280;
@@ -345,10 +345,10 @@ public class UVCCamera {
     }
 
     private static void addSize(JSONObject format, int formatType, int frameType, List<Size> size_list) throws JSONException {
-        JSONArray size = format.getJSONArray("size");
-        int size_nums = size.length();
-        for (int j = 0; j < size_nums; j++) {
-            String[] sz = size.getString(j).split("x");
+        JSONArray array = format.getJSONArray("size");
+        int length = array.length();
+        for (int j = 0; j < length; j++) {
+            String[] sz = array.getString(j).split("x");
             try {
                 size_list.add(new Size(formatType, frameType, j, Integer.parseInt(sz[0]), Integer.parseInt(sz[1])));
             } catch (Exception e) {

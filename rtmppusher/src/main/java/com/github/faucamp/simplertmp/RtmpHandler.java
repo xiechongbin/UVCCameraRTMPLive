@@ -10,9 +10,7 @@ import java.net.SocketException;
 /**
  * Created by leo.ma on 2016/11/3.
  */
-
 public class RtmpHandler extends Handler {
-
     private static final int MSG_RTMP_CONNECTING = 0;
     private static final int MSG_RTMP_CONNECTED = 1;
     private static final int MSG_RTMP_VIDEO_STREAMING = 2;
@@ -22,7 +20,6 @@ public class RtmpHandler extends Handler {
     private static final int MSG_RTMP_VIDEO_FPS_CHANGED = 6;
     private static final int MSG_RTMP_VIDEO_BITRATE_CHANGED = 7;
     private static final int MSG_RTMP_AUDIO_BITRATE_CHANGED = 8;
-
     private static final int MSG_RTMP_SOCKET_EXCEPTION = 9;
     private static final int MSG_RTMP_IO_EXCEPTION = 10;
     private static final int MSG_RTMP_ILLEGAL_ARGUMENT_EXCEPTION = 11;
@@ -86,7 +83,10 @@ public class RtmpHandler extends Handler {
         obtainMessage(MSG_RTMP_ILLEGAL_STATE_EXCEPTION, e).sendToTarget();
     }
 
-    @Override  // runs on UI thread
+    /**
+     * runs on UI thread
+     */
+    @Override
     public void handleMessage(Message msg) {
         RtmpListener listener = mWeakListener.get();
         if (listener == null) {
