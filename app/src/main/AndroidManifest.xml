@@ -44,7 +44,7 @@
             android:configChanges="screenSize|screenLayout|orientation"/>
         <activity
             android:name=".activity.ExternalCameraLiveActivity"
-            android:configChanges="screenSize|screenLayout|orientation"/>
+            android:screenOrientation="landscape"/>
     </application>
 
 </manifest>

@@ -49,7 +49,6 @@ import com.serenegiant.utils.FpsCounter;
  */
 public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
         implements TextureView.SurfaceTextureListener, CameraViewInterface {
-
     private static final boolean DEBUG = false;
     private static final String TAG = "UVCCameraTextureView";
 
@@ -81,7 +80,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
     public void onResume() {
         if (DEBUG) Log.v(TAG, "onResume:");
         if (mHasSurface) {
-            mRenderHandler = RenderHandler.createHandler(mFpsCounter, getRealSurfaceTexture(), getWidth(), getHeight());
+            mRenderHandler = RenderHandler.createHandler(mCallback, mFpsCounter, getRealSurfaceTexture(), getWidth(), getHeight());
         }
     }
 
@@ -104,14 +103,11 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
             Log.v(TAG, "onSurfaceTextureAvailable:" + surface + "," + width + ",height=" + height);
         }
         if (mRenderHandler == null) {
-            mRenderHandler = RenderHandler.createHandler(mFpsCounter, surface, width, height);
+            mRenderHandler = RenderHandler.createHandler(mCallback, mFpsCounter, surface, width, height);
         } else {
             mRenderHandler.resize(width, height);
         }
         mHasSurface = true;
-        if (mCallback != null) {
-            mCallback.onSurfaceCreated(surface, width, height);
-        }
     }
 
     @Override
@@ -121,9 +117,6 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
         }
         if (mRenderHandler != null) {
             mRenderHandler.resize(width, height);
-        }
-        if (mCallback != null) {
-            mCallback.onSurfaceChanged(getRealSurfaceTexture(), width, height);
         }
     }
 
@@ -135,9 +128,6 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
             mRenderHandler = null;
         }
         mHasSurface = false;
-        if (mCallback != null) {
-            mCallback.onSurfaceDestroy(getRealSurfaceTexture());
-        }
         if (mPreviewSurface != null) {
             mPreviewSurface.release();
             mPreviewSurface = null;
@@ -243,8 +233,8 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
         private boolean mIsActive = true;
         private FpsCounter mFpsCounter;
 
-        public static RenderHandler createHandler(FpsCounter counter, SurfaceTexture surface, int width, int height) {
-            RenderThread thread = new RenderThread(counter, surface, width, height);
+        public static RenderHandler createHandler(CameraViewInterface.Callback callback, FpsCounter counter, SurfaceTexture surface, int width, int height) {
+            RenderThread thread = new RenderThread(callback, counter, surface, width, height);
             thread.start();
             return thread.getHandler();
         }
@@ -351,6 +341,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
             private float[] mStMatrix = new float[16];
             private MediaEncoder mEncoder;
             private int mViewWidth, mViewHeight;
+            private CameraViewInterface.Callback mCallback;
             private FpsCounter mFpsCounter;
 
             /**
@@ -358,7 +349,8 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
              *
              * @param surface: drawing surface came from TextureView
              */
-            public RenderThread(FpsCounter fpsCounter, SurfaceTexture surface, int width, int height) {
+            public RenderThread(CameraViewInterface.Callback callback, FpsCounter fpsCounter, SurfaceTexture surface, int width, int height) {
+                mCallback = callback;
                 mFpsCounter = fpsCounter;
                 mSurface = surface;
                 mViewWidth = width;
@@ -412,6 +404,9 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                     mPreviewSurface.setOnFrameAvailableListener(mHandler);
                     // notify to caller thread that previewSurface is ready
                     mSync.notifyAll();
+                    if (mCallback != null) {
+                        mCallback.onSurfaceChanged(mPreviewSurface, mViewWidth, mViewHeight);
+                    }
                 }
             }
 
@@ -428,10 +423,12 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
              */
             public void onDrawFrame() {
                 mEglSurface.makeCurrent();
-                // update texture(came from camera)
-                mPreviewSurface.updateTexImage();
-                // get texture matrix
-                mPreviewSurface.getTransformMatrix(mStMatrix);
+                if (mPreviewSurface != null) {
+                    // update texture(came from camera)
+                    mPreviewSurface.updateTexImage();
+                    // get texture matrix
+                    mPreviewSurface.getTransformMatrix(mStMatrix);
+                }
                 // notify video encoder if it exist
                 if (mEncoder != null) {
                     // notify to capturing thread that the camera frame is available.
@@ -474,6 +471,9 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                 mEglSurface.makeCurrent();
                 // create drawing object
                 mDrawer = new GLDrawer2D(true);
+                if (mCallback != null) {
+                    mCallback.onSurfaceCreated(mSurface, mViewWidth, mViewHeight);
+                }
             }
 
             private void release() {
@@ -481,6 +481,9 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
                 if (mDrawer != null) {
                     mDrawer.release();
                     mDrawer = null;
+                }
+                if (mCallback != null) {
+                    mCallback.onSurfaceDestroy(mPreviewSurface);
                 }
                 if (mPreviewSurface != null) {
                     mPreviewSurface.release();

@@ -31,8 +31,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -144,16 +142,10 @@ public class RtmpConnection implements RtmpPublisher {
 
         // Start the "main" handling thread
         rxPacketHandler = new Thread(new Runnable() {
-
             @Override
             public void run() {
-                try {
-                    if (DEBUG) Log.d(TAG, "starting main rx handler loop");
-                    handleRxPacketLoop();
-                } catch (IOException ex) {
-                    if (DEBUG)
-                        Logger.getLogger(RtmpConnection.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                if (DEBUG) Log.d(TAG, "starting main rx handler loop");
+                handleRxPacketLoop();
             }
         });
         rxPacketHandler.start();
@@ -346,9 +338,13 @@ public class RtmpConnection implements RtmpPublisher {
         if (socket != null) {
             try {
                 // It will raise EOFException in handleRxPacketThread
-                socket.shutdownInput();
+                if (!socket.isInputShutdown()) {
+                    socket.shutdownInput();
+                }
                 // It will raise SocketException in sendRtmpPacket
-                socket.shutdownOutput();
+                if (!socket.isOutputShutdown()) {
+                    socket.shutdownOutput();
+                }
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
@@ -366,7 +362,8 @@ public class RtmpConnection implements RtmpPublisher {
 
             // shutdown socket as well as its input and output stream
             try {
-                socket.close();
+                if (socket != null)
+                    socket.close();
                 if (DEBUG) Log.d(TAG, "socket closed");
             } catch (IOException ex) {
                 if (DEBUG) Log.e(TAG, "shutdown(): failed to close socket", ex);
@@ -498,7 +495,9 @@ public class RtmpConnection implements RtmpPublisher {
             if (rtmpPacket instanceof Command) {
                 rtmpSessionInfo.addInvokedCommand(((Command) rtmpPacket).getTransactionId(), ((Command) rtmpPacket).getCommandName());
             }
-            outputStream.flush();
+            if (socket != null && !socket.isOutputShutdown()) {
+                outputStream.flush();
+            }
         } catch (SocketException se) {
             // Since there are still remaining AV frame in the cache, we set a flag to guarantee the
             // socket exception only issue one time.
@@ -515,7 +514,7 @@ public class RtmpConnection implements RtmpPublisher {
         }
     }
 
-    private void handleRxPacketLoop() throws IOException {
+    private void handleRxPacketLoop() {
         // Handle all queued received RTMP packets
         while (!Thread.interrupted()) {
             try {
@@ -591,9 +590,8 @@ public class RtmpConnection implements RtmpPublisher {
         }
     }
 
-    private void handleRxInvoke(Command invoke) throws IOException {
+    private void handleRxInvoke(Command invoke) {
         String commandName = invoke.getCommandName();
-
         if (commandName.equals("_result")) {
             // This is the result of one of the methods invoked by us
             String method = rtmpSessionInfo.takeInvokedCommand(invoke.getTransactionId());

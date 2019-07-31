@@ -65,6 +65,11 @@ public class SrsEncoder {
     private int audioFlvTrack;
     private int audioMp4Track;
 
+    static {
+        System.loadLibrary("yuv");
+        System.loadLibrary("enc");
+    }
+
     // Y, U (Cb) and V (Cr)
     // yuv420                     yuv yuv yuv yuv
     // yuv420p (planar)   yyyy*2 uu vv
@@ -300,6 +305,9 @@ public class SrsEncoder {
     }
 
     private void onProcessedYuvFrame(byte[] yuvFrame, long pts) {
+        if (vEncoder == null) {
+            return;
+        }
         ByteBuffer[] inBuffers = vEncoder.getInputBuffers();
         ByteBuffer[] outBuffers = vEncoder.getOutputBuffers();
 
@@ -341,6 +349,9 @@ public class SrsEncoder {
      * when got encoded h264 es stream.
      */
     private void onEncodedAnnexBFrame(ByteBuffer es, MediaCodec.BufferInfo bi) {
+        if (mp4Muxer == null || flvMuxer == null) {
+            return;
+        }
         mp4Muxer.writeSampleData(videoMp4Track, es.duplicate(), bi);
         flvMuxer.writeSampleData(videoFlvTrack, es, bi);
     }
@@ -350,6 +361,9 @@ public class SrsEncoder {
      * Just cache GOP / FPS seconds data according to latency.
      */
     public void onGetPcmFrame(byte[] data, int size) {
+        if (flvMuxer == null || aEncoder == null) {
+            return;
+        }
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
         if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             ByteBuffer[] inBuffers = aEncoder.getInputBuffers();
@@ -382,6 +396,9 @@ public class SrsEncoder {
      * when got encoded aac raw stream.
      */
     private void onEncodedAacFrame(ByteBuffer es, MediaCodec.BufferInfo bi) {
+        if (mp4Muxer == null || flvMuxer == null) {
+            return;
+        }
         mp4Muxer.writeSampleData(audioMp4Track, es.duplicate(), bi);
         flvMuxer.writeSampleData(audioFlvTrack, es, bi);
     }
@@ -391,6 +408,9 @@ public class SrsEncoder {
      * Just cache GOP / FPS seconds data according to latency.
      */
     public void onGetRgbaFrame(byte[] data, int width, int height) {
+        if (flvMuxer == null) {
+            return;
+        }
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
         if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             long pts = System.nanoTime() / 1000 - mPresentTime;
@@ -420,6 +440,9 @@ public class SrsEncoder {
      * Just cache GOP / FPS seconds data according to latency.
      */
     public void onGetYuvNV21Frame(byte[] data, int width, int height, Rect boundingBox) {
+        if (flvMuxer == null) {
+            return;
+        }
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
         if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             long pts = System.nanoTime() / 1000 - mPresentTime;
@@ -449,6 +472,9 @@ public class SrsEncoder {
      * Just cache GOP / FPS seconds data according to latency.
      */
     public void onGetArgbFrame(int[] data, int width, int height, Rect boundingBox) {
+        if (flvMuxer == null) {
+            return;
+        }
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
         if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             long pts = System.nanoTime() / 1000 - mPresentTime;
@@ -478,6 +504,9 @@ public class SrsEncoder {
      * Just cache GOP / FPS seconds data according to latency.
      */
     public void onGetArgbFrame(int[] data, int width, int height) {
+        if (flvMuxer == null) {
+            return;
+        }
         AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
         if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
             long pts = System.nanoTime() / 1000 - mPresentTime;
@@ -723,8 +752,4 @@ public class SrsEncoder {
 
     private native void closeSoftEncoder();
 
-    static {
-        System.loadLibrary("yuv");
-        System.loadLibrary("enc");
-    }
 }

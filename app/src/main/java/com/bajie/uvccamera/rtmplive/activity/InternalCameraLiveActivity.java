@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.bajie.uvccamera.rtmplive.R;
 import com.bajie.uvccamera.rtmplive.base.BaseActivity;
+import com.bajie.uvccamera.rtmplive.util.TestConfig;
 import com.bajie.uvccamera.rtmplive.util.ToastUtils;
 import com.github.faucamp.simplertmp.RtmpHandler;
 import com.orhanobut.logger.Logger;
@@ -39,10 +40,6 @@ import java.util.Locale;
  * Created by YoungWu on 2019/7/8.
  */
 public class InternalCameraLiveActivity extends BaseActivity implements View.OnClickListener {
-    /**
-     * 测试推流地址
-     */
-    public static final String TEST_URL = "rtmp://119.29.184.33:1935/live/livestream_863134036763822";
     private SrsCameraView srsCameraView;
     private TextView tv_info;
     private Button btn_start;
@@ -442,7 +439,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
             publisher.setSendVideoOnly(false);
         }
 
-        publisher.startPublish(TEST_URL);
+        publisher.startPublish(TestConfig.TEST_URL);
         handler.post(runnable);
     }
 
@@ -618,9 +615,34 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
     private SrsCameraView.ErrorCallback errorCallback = error -> handleException();
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        srsCameraView.onResume();
+        if (btn_start.getText().toString().equals("结束直播")) {
+            publisher.resumePublish();
+        }
+        if (btn_start_record_video.getText().toString().equals("结束录制")) {
+            publisher.resumeRecord();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        srsCameraView.onPause();
+        if (btn_start_record_video.getText().toString().equals("结束录制")) {
+            publisher.pauseRecord();
+        }
+        if (btn_start.getText().toString().equals("结束直播")) {
+            publisher.pausePublish();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         stopLive();
+        publisher.closeCamera();
     }
 }

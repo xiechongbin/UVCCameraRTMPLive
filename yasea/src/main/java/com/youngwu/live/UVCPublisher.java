@@ -1,22 +1,31 @@
-package net.ossrs.yasea;
+package com.youngwu.live;
 
 import android.media.AudioRecord;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.AutomaticGainControl;
 
 import com.github.faucamp.simplertmp.RtmpHandler;
+import com.serenegiant.usb.USBMonitor;
+import com.seu.magicfilter.utils.MagicFilterType;
+
+import net.ossrs.yasea.SrsEncodeHandler;
+import net.ossrs.yasea.SrsEncoder;
+import net.ossrs.yasea.SrsFlvMuxer;
+import net.ossrs.yasea.SrsMp4Muxer;
+import net.ossrs.yasea.SrsRecordHandler;
 
 import java.io.File;
 
 /**
  * Created by YoungWu on 19/7/5.
  */
-public class SrsUvcPublisher {
+public class UVCPublisher {
     private static AudioRecord mic;
     private static AcousticEchoCanceler aec;
     private static AutomaticGainControl agc;
     private byte[] mPcmBuffer = new byte[4096];
-    private Thread aworker;
+    private Thread aWorker;
+    private UVCCameraView mUVVCCameraView;
     private boolean sendVideoOnly = false;
     private boolean sendAudioOnly = false;
     private int videoFrameCount;
@@ -27,11 +36,17 @@ public class SrsUvcPublisher {
     private SrsMp4Muxer mMp4Muxer;
     private SrsEncoder mEncoder;
 
-    public void setVideoYuvData(byte[] yuv) {
-        calcSamplingFps();
-        if (!sendAudioOnly) {
-            mEncoder.onGetYuvFrame(yuv);
-        }
+    public UVCPublisher(UVCCameraView view) {
+        mUVVCCameraView = view;
+        mUVVCCameraView.setPreviewCallback(new UVCCameraView.PreviewCallback() {
+            @Override
+            public void onGetRgbaFrame(byte[] data, int width, int height) {
+                calcSamplingFps();
+                if (!sendAudioOnly) {
+                    mEncoder.onGetRgbaFrame(data, width, height);
+                }
+            }
+        });
     }
 
     /**
@@ -48,6 +63,22 @@ public class SrsUvcPublisher {
                 videoFrameCount = 0;
             }
         }
+    }
+
+    public void openCamera(USBMonitor.UsbControlBlock ctrlBlock) {
+        mUVVCCameraView.openCamera(ctrlBlock);
+    }
+
+    public void closeCamera() {
+        mUVVCCameraView.closeCamera();
+    }
+
+    public void startPreview() {
+        mUVVCCameraView.startPreview();
+    }
+
+    public void stopPreview() {
+        mUVVCCameraView.stopPreview();
     }
 
     public void startAudio() {
@@ -70,7 +101,7 @@ public class SrsUvcPublisher {
             }
         }
 
-        aworker = new Thread(new Runnable() {
+        aWorker = new Thread(new Runnable() {
             @Override
             public void run() {
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
@@ -85,26 +116,28 @@ public class SrsUvcPublisher {
                             break;
                         }
                     } else {
-                        int size = mic.read(mPcmBuffer, 0, mPcmBuffer.length);
-                        if (size > 0) {
-                            mEncoder.onGetPcmFrame(mPcmBuffer, size);
+                        if (mic != null) {
+                            int size = mic.read(mPcmBuffer, 0, mPcmBuffer.length);
+                            if (size > 0) {
+                                mEncoder.onGetPcmFrame(mPcmBuffer, size);
+                            }
                         }
                     }
                 }
             }
         });
-        aworker.start();
+        aWorker.start();
     }
 
     public void stopAudio() {
-        if (aworker != null) {
-            aworker.interrupt();
+        if (aWorker != null) {
+            aWorker.interrupt();
             try {
-                aworker.join();
+                aWorker.join();
             } catch (InterruptedException e) {
-                aworker.interrupt();
+                aWorker.interrupt();
             }
-            aworker = null;
+            aWorker = null;
         }
 
         if (mic != null) {
@@ -131,18 +164,27 @@ public class SrsUvcPublisher {
         if (!mEncoder.start()) {
             return;
         }
+        startPreview();
         startAudio();
+        if (mEncoder != null && mEncoder.isEnabled()) {
+            mUVVCCameraView.enableEncoding();
+        }
     }
 
     private void resumeEncode() {
         startAudio();
+        if (mEncoder != null && mEncoder.isEnabled()) {
+            mUVVCCameraView.enableEncoding();
+        }
     }
 
     private void pauseEncode() {
         stopAudio();
+        mUVVCCameraView.disableEncoding();
     }
 
     private void stopEncode() {
+        stopPreview();
         stopAudio();
         mEncoder.stop();
     }
@@ -217,12 +259,12 @@ public class SrsUvcPublisher {
         mEncoder.switchToHardEncoder();
     }
 
-    public boolean isSoftEncoder() {
-        return mEncoder.isSoftEncoder();
+    public double getSamplingFps() {
+        return mSamplingFps;
     }
 
-    public double getmSamplingFps() {
-        return mSamplingFps;
+    public void setPreviewResolution(int width, int height) {
+        mUVVCCameraView.setPreviewResolution(width, height);
     }
 
     public void setOutputResolution(int width, int height) {
@@ -265,6 +307,10 @@ public class SrsUvcPublisher {
         sendAudioOnly = flag;
     }
 
+    public void switchCameraFilter(MagicFilterType type) {
+        mUVVCCameraView.setFilter(type);
+    }
+
     public void setRtmpHandler(RtmpHandler handler) {
         mFlvMuxer = new SrsFlvMuxer(handler);
         if (mEncoder != null) {
@@ -287,5 +333,9 @@ public class SrsUvcPublisher {
         if (mMp4Muxer != null) {
             mEncoder.setMp4Muxer(mMp4Muxer);
         }
+    }
+
+    public void setErrorCallback(UVCCameraView.ErrorCallback errorCallback) {
+        mUVVCCameraView.setErrorCallback(errorCallback);
     }
 }

@@ -47,6 +47,7 @@ import com.serenegiant.encoder.MediaSurfaceEncoder;
 import com.serenegiant.encoder.MediaVideoBufferEncoder;
 import com.serenegiant.encoder.MediaVideoEncoder;
 import com.serenegiant.usb.IFrameCallback;
+import com.serenegiant.usb.IStatusCallback;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.UVCCamera;
 import com.serenegiant.uvccamera.R;
@@ -446,6 +447,13 @@ abstract class AbstractUVCCameraHandler extends Handler {
             try {
                 UVCCamera camera = new UVCCamera();
                 camera.open(ctrlBlock);
+                camera.setStatusCallback(new IStatusCallback() {
+                    @Override
+                    public void onStatus(int statusClass, int event, int selector, int statusAttribute, ByteBuffer data) {
+                        if (DEBUG)
+                            Log.i(TAG_THREAD, "statusClass=" + statusClass + ",event=" + event + ",selector=" + selector + ",statusAttribute=" + statusAttribute + ",size=" + data.slice());
+                    }
+                });
                 synchronized (mSync) {
                     mUVCCamera = camera;
                 }

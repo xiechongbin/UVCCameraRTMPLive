@@ -85,7 +85,7 @@ public class SrsMp4Muxer {
 
     private Thread worker;
     private volatile boolean bRecording = false;
-    private volatile boolean bPaused = false;
+    private volatile boolean bPaused = true;
     private volatile boolean needToFindKeyFrame = true;
     private final Object writeLock = new Object();
     private ConcurrentLinkedQueue<SrsEsFrame> frameCache = new ConcurrentLinkedQueue<>();
@@ -182,7 +182,7 @@ public class SrsMp4Muxer {
      */
     public void stop() {
         bRecording = false;
-        bPaused = false;
+        bPaused = true;
         needToFindKeyFrame = true;
         aacSpecConfig = false;
         frameCache.clear();
