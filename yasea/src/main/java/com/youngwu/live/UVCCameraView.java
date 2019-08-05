@@ -117,8 +117,8 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         surfaceTexture.updateTexImage();
-
         surfaceTexture.getTransformMatrix(mSurfaceMatrix);
+
         Matrix.multiplyMM(mTransformMatrix, 0, mSurfaceMatrix, 0, mProjectionMatrix, 0);
         if (magicFilter != null) {
             magicFilter.setTextureTransformMatrix(mTransformMatrix);
@@ -244,19 +244,19 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
             return;
         }
         try {
-            uvcCamera.setAutoFocus(true);
-            uvcCamera.setAutoWhiteBlance(true);
-            uvcCamera.setBrightness(80);//亮度
-            uvcCamera.setBacklightComp(1);//逆光补偿
-            uvcCamera.setContrast(50);//对比度
-            uvcCamera.setExposure(156);//曝光
+            uvcCamera.setAutoFocus(false);
+            uvcCamera.setAutoWhiteBlance(false);
+//            uvcCamera.setBrightness(80);//亮度
+//            uvcCamera.setBacklightComp(1);//逆光补偿
+//            uvcCamera.setContrast(50);//对比度
+//            uvcCamera.setExposure(156);//曝光
 //            uvcCamera.setFocus(1);
-            uvcCamera.setGain(0);//增益
-            uvcCamera.setGamma(12);//gama
-            uvcCamera.setHue(50);//色调
-            uvcCamera.setPowerlineFrequency(50);//电力线频率
-            uvcCamera.setSaturation(56);//饱和度
-            uvcCamera.setSharpness(16);//清晰度
+//            uvcCamera.setGain(0);//增益
+//            uvcCamera.setGamma(12);//gama
+//            uvcCamera.setHue(50);//色调
+//            uvcCamera.setPowerlineFrequency(50);//电力线频率
+//            uvcCamera.setSaturation(56);//饱和度
+//            uvcCamera.setSharpness(16);//清晰度
 //            uvcCamera.setWhiteBlance(1);
 //            uvcCamera.setZoom(1);
 
