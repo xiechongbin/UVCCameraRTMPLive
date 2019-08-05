@@ -134,7 +134,7 @@ public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {
     }
 
     @Override
-    protected void startPreview(Object surface) {
+    public void startPreview(Object surface) {
         if (mRendererHolder != null) {
             super.startPreview(mRendererHolder.getSurface());
         } else {

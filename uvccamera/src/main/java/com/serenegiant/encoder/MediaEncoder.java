@@ -188,7 +188,7 @@ public abstract class MediaEncoder implements Runnable {
     /**
      * the method to request stop encoding
      */
-    protected  void stopRecording() {
+    protected void stopRecording() {
         if (DEBUG) Log.v(TAG, "stopRecording");
         synchronized (mSync) {
             if (!mIsCapturing || mRequestStop) {

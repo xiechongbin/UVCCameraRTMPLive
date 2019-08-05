@@ -197,11 +197,10 @@ public class MediaMuxerWrapper {
      * @param ext  .mp4(.m4a for audio) or .png
      * @return return null when this app has no writing permission to external storage.
      */
-    public static File getCaptureFile(final String type, final String ext) {
-        final File dir = new File(Environment.getExternalStoragePublicDirectory(type), DIR_NAME);
+    public static File getCaptureFile(String type, String ext) {
+        File dir = new File(Environment.getExternalStoragePublicDirectory(type), DIR_NAME);
         Log.d(TAG, "path=" + dir.toString());
-        dir.mkdirs();
-        if (dir.canWrite()) {
+        if (dir.mkdirs() && dir.canWrite()) {
             return new File(dir, getDateTimeString() + ext);
         }
         return null;

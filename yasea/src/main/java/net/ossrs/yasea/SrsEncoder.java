@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * jni指定了该类的类名以及包的路径不允许更改。
  */
 public class SrsEncoder {
-    private static final boolean DEBUG = false;
     private static final String TAG = "SrsEncoder";
+    private static final boolean DEBUG = true;
 
     public static final String vCodec = SrsLiveConfig.VIDEO_CODEC;
     public static final String aCodec = SrsLiveConfig.AUDIO_CODEC;
@@ -579,22 +579,35 @@ public class SrsEncoder {
         RGBASoftEncode(data, width, height, true, 180, pts);
     }
 
-    public AudioRecord chooseAudioRecord() {
-        AudioRecord mic = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, SrsEncoder.aSampleRate,
-                AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, getPcmBufferSize() * 4);
-        if (mic.getState() != AudioRecord.STATE_INITIALIZED) {
-            mic = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, SrsEncoder.aSampleRate,
-                    AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, getPcmBufferSize() * 4);
-            if (mic.getState() != AudioRecord.STATE_INITIALIZED) {
-                mic = null;
-            } else {
-                SrsEncoder.aChannelConfig = AudioFormat.CHANNEL_IN_MONO;
-            }
-        } else {
-            SrsEncoder.aChannelConfig = AudioFormat.CHANNEL_IN_STEREO;
-        }
+    private static final int[] AUDIO_SOURCES = new int[]{
+            MediaRecorder.AudioSource.DEFAULT,
+            MediaRecorder.AudioSource.MIC,
+            MediaRecorder.AudioSource.CAMCORDER,
+    };
 
-        return mic;
+    public AudioRecord chooseAudioRecord() {
+        AudioRecord audioRecord = null;
+        for (int src : AUDIO_SOURCES) {
+            try {
+                audioRecord = new AudioRecord(src, SrsEncoder.aSampleRate,
+                        AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, getPcmBufferSize() * 4);
+                if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
+                    audioRecord = new AudioRecord(src, SrsEncoder.aSampleRate,
+                            AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, getPcmBufferSize() * 4);
+                    if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
+                        SrsEncoder.aChannelConfig = AudioFormat.CHANNEL_IN_MONO;
+                    }
+                } else {
+                    SrsEncoder.aChannelConfig = AudioFormat.CHANNEL_IN_STEREO;
+                }
+            } catch (Exception e) {
+                audioRecord = null;
+            }
+            if (audioRecord != null) {
+                break;
+            }
+        }
+        return audioRecord;
     }
 
     private int getPcmBufferSize() {

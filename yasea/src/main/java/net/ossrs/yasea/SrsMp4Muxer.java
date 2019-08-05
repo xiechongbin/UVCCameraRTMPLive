@@ -63,7 +63,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class SrsMp4Muxer {
     private static final String TAG = "SrsMp4Muxer";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private static final int VIDEO_TRACK = 100;
     private static final int AUDIO_TRACK = 101;
@@ -85,7 +85,7 @@ public class SrsMp4Muxer {
 
     private Thread worker;
     private volatile boolean bRecording = false;
-    private volatile boolean bPaused = true;
+    private volatile boolean bPaused = false;
     private volatile boolean needToFindKeyFrame = true;
     private final Object writeLock = new Object();
     private ConcurrentLinkedQueue<SrsEsFrame> frameCache = new ConcurrentLinkedQueue<>();
@@ -182,7 +182,7 @@ public class SrsMp4Muxer {
      */
     public void stop() {
         bRecording = false;
-        bPaused = true;
+        bPaused = false;
         needToFindKeyFrame = true;
         aacSpecConfig = false;
         frameCache.clear();
@@ -277,7 +277,7 @@ public class SrsMp4Muxer {
         public final static int CodedSliceExt = 20;
     }
 
-    private void writeVideoSample(final ByteBuffer bb, MediaCodec.BufferInfo bi) {
+    private void writeVideoSample(ByteBuffer bb, MediaCodec.BufferInfo bi) {
         int nal_unit_type = bb.get(4) & 0x1f;
         if (nal_unit_type == SrsAvcNaluType.IDR || nal_unit_type == SrsAvcNaluType.NonIDR) {
             writeFrameByte(VIDEO_TRACK, bb, bi, nal_unit_type == SrsAvcNaluType.IDR);
@@ -309,7 +309,7 @@ public class SrsMp4Muxer {
         }
     }
 
-    private void writeAudioSample(final ByteBuffer bb, MediaCodec.BufferInfo bi) {
+    private void writeAudioSample(ByteBuffer bb, MediaCodec.BufferInfo bi) {
         if (!aacSpecConfig) {
             aacSpecConfig = true;
         } else {
@@ -380,11 +380,11 @@ public class SrsMp4Muxer {
      * the raw h.264 stream, in annexB.
      */
     private class SrsRawH264Stream {
+
         public boolean is_sps(SrsEsFrameBytes frame) {
             if (frame.size < 1) {
                 return false;
             }
-
             return (frame.data.get(0) & 0x1f) == SrsAvcNaluType.SPS;
         }
 
@@ -405,17 +405,14 @@ public class SrsMp4Muxer {
                 if (bb.get(pos) != 0x00 || bb.get(pos + 1) != 0x00) {
                     break;
                 }
-
                 // match N[00] 00 00 01, where N>=0
                 if (bb.get(pos + 2) == 0x01) {
                     as.match = true;
                     as.nb_start_code = pos + 3 - bb.position();
                     break;
                 }
-
                 pos++;
             }
-
             return as;
         }
 

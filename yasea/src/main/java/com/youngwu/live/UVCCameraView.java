@@ -246,15 +246,17 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
         try {
             uvcCamera.setAutoFocus(true);
             uvcCamera.setAutoWhiteBlance(true);
-//            uvcCamera.setBrightness(1);
-//            uvcCamera.setContrast(1);
+            uvcCamera.setBrightness(80);//亮度
+            uvcCamera.setBacklightComp(1);//逆光补偿
+            uvcCamera.setContrast(50);//对比度
+            uvcCamera.setExposure(156);//曝光
 //            uvcCamera.setFocus(1);
-//            uvcCamera.setGain(1);
-//            uvcCamera.setGamma(1);
-//            uvcCamera.setHue(1);
-//            uvcCamera.setPowerlineFrequency(1);
-//            uvcCamera.setSaturation(1);
-//            uvcCamera.setSharpness(1);
+            uvcCamera.setGain(0);//增益
+            uvcCamera.setGamma(12);//gama
+            uvcCamera.setHue(50);//色调
+            uvcCamera.setPowerlineFrequency(50);//电力线频率
+            uvcCamera.setSaturation(56);//饱和度
+            uvcCamera.setSharpness(16);//清晰度
 //            uvcCamera.setWhiteBlance(1);
 //            uvcCamera.setZoom(1);
 

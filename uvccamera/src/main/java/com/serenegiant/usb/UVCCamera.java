@@ -101,6 +101,7 @@ public class UVCCamera {
     public static final int PU_AVIDEO_STD = 0x80010000;    // D16: Analog Video Standard
     public static final int PU_AVIDEO_LOCK = 0x80020000;    // D17: Analog Video Lock Status
     public static final int PU_CONTRAST_AUTO = 0x80040000;    // D18: Contrast, Auto
+    public static final int PU_EXPOSURE = 0x80040001;    // 曝光
 
     // uvc_status_class from libuvc.h
     public static final int STATUS_CLASS_CONTROL = 0x10;
@@ -825,7 +826,7 @@ public class UVCCamera {
         }
     }
 
-    //================================================================================
+//================================================================================
     public void setPowerlineFrequency(int frequency) {
         if (mNativePtr != 0)
             nativeSetPowerlineFrequency(mNativePtr, frequency);
@@ -847,7 +848,6 @@ public class UVCCamera {
             float range = Math.abs(mZoomMax - mZoomMin);
             if (range > 0) {
                 int z = (int) (zoom / 100.f * range) + mZoomMin;
-// 			   Log.d(TAG, "setZoom:zoom=" + zoom + " ,value=" + z);
                 nativeSetZoom(mNativePtr, z);
             }
         }
@@ -881,7 +881,68 @@ public class UVCCamera {
         }
     }
 
-    //================================================================================
+//================================================================================
+
+    /**
+     * 设置逆光补偿
+     */
+    public synchronized void setBacklightComp(int value) {
+        if (mNativePtr != 0) {
+            nativeSetBacklightComp(mNativePtr, value);
+        }
+    }
+
+    /**
+     * 设置逆光补偿
+     */
+    public synchronized int getBacklightComp() {
+        int result = 0;
+        if (mNativePtr != 0) {
+            result = nativeGetBacklightComp(mNativePtr);
+        }
+        return result;
+    }
+
+    /**
+     * 重置逆光补偿
+     */
+    public synchronized void resetBacklightComp() {
+        if (mNativePtr != 0) {
+            nativeSetBacklightComp(mNativePtr, 30);
+        }
+    }
+
+//================================================================================
+
+    /**
+     * 曝光
+     */
+    public synchronized void setExposure(int value) {
+        if (mNativePtr != 0) {
+            nativeSetExposure(mNativePtr, value);
+        }
+    }
+
+    /**
+     * 曝光
+     */
+    public synchronized int getExposure() {
+        if (mNativePtr != 0) {
+            return nativeGetExposure(mNativePtr);
+        }
+        return -1;
+    }
+
+    /**
+     * 曝光
+     */
+    public synchronized void resetExposure() {
+        if (mNativePtr != 0) {
+            nativeSetExposure(mNativePtr, 0);
+        }
+    }
+
+//================================================================================
     public synchronized void updateCameraParams() {
         if (mNativePtr != 0) {
             if ((mControlSupports == 0) || (mProcSupports == 0)) {

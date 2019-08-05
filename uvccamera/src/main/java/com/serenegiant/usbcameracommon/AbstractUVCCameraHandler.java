@@ -132,17 +132,17 @@ abstract class AbstractUVCCameraHandler extends Handler {
         return (thread != null) && thread.isEqual(device);
     }
 
-    protected boolean isCameraThread() {
+    public boolean isCameraThread() {
         CameraThread thread = mWeakThread.get();
         return thread != null && (thread.getId() == Thread.currentThread().getId());
     }
 
-    protected boolean isReleased() {
+    public boolean isReleased() {
         CameraThread thread = mWeakThread.get();
         return mReleased || (thread == null);
     }
 
-    protected void checkReleased() {
+    public void checkReleased() {
         if (isReleased()) {
             throw new IllegalStateException("already released");
         }
@@ -167,7 +167,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
         throw new UnsupportedOperationException("does not support now");
     }
 
-    protected void startPreview(Object surface) {
+    public void startPreview(Object surface) {
         checkReleased();
         if (!((surface instanceof SurfaceHolder) || (surface instanceof Surface) || (surface instanceof SurfaceTexture))) {
             throw new IllegalArgumentException("surface should be one of SurfaceHolder, Surface or SurfaceTexture");
@@ -198,12 +198,12 @@ abstract class AbstractUVCCameraHandler extends Handler {
         if (DEBUG) Log.v(TAG, "stopPreview:finished");
     }
 
-    protected void captureStill() {
+    public void captureStill() {
         checkReleased();
         sendEmptyMessage(MSG_CAPTURE_STILL);
     }
 
-    protected void captureStill(String path) {
+    public void captureStill(String path) {
         checkReleased();
         sendMessage(obtainMessage(MSG_CAPTURE_STILL, path));
     }
@@ -242,7 +242,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
         }
     }
 
-    protected void updateMedia(String path) {
+    public void updateMedia(String path) {
         sendMessage(obtainMessage(MSG_MEDIA_UPDATE, path));
     }
 
@@ -368,10 +368,10 @@ abstract class AbstractUVCCameraHandler extends Handler {
          * @param parent          parent Activity
          * @param cameraView      for still capturing
          * @param encoderType     0: use MediaSurfaceEncoder, 1: use MediaVideoEncoder, 2: use MediaVideoBufferEncoder
-         * @param width
-         * @param height
+         * @param width           preview width
+         * @param height          preview height
          * @param format          either FRAME_FORMAT_YUYV(0) or FRAME_FORMAT_MJPEG(1)
-         * @param bandwidthFactor
+         * @param bandwidthFactor 带宽比例
          */
         CameraThread(Class<? extends AbstractUVCCameraHandler> clazz,
                      Activity parent, CameraViewInterface cameraView,

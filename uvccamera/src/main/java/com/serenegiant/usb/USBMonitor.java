@@ -257,7 +257,7 @@ public class USBMonitor {
     /**
      * return device list, return empty list if no device matched
      */
-    private List<UsbDevice> getDeviceList() throws IllegalStateException {
+    public List<UsbDevice> getDeviceList() throws IllegalStateException {
         if (destroyed) throw new IllegalStateException("already destroyed");
         return getDeviceList(mDeviceFilters);
     }
@@ -265,7 +265,7 @@ public class USBMonitor {
     /**
      * return device list, return empty list if no device matched
      */
-    private List<UsbDevice> getDeviceList(List<DeviceFilter> filters) throws IllegalStateException {
+    public List<UsbDevice> getDeviceList(List<DeviceFilter> filters) throws IllegalStateException {
         if (destroyed) throw new IllegalStateException("already destroyed");
         HashMap<String, UsbDevice> deviceList = mUsbManager.getDeviceList();
         List<UsbDevice> result = new ArrayList<>();
