@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class SrsEncoder {
     private static final String TAG = "SrsEncoder";
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     public static final String vCodec = SrsLiveConfig.VIDEO_CODEC;
     public static final String aCodec = SrsLiveConfig.AUDIO_CODEC;

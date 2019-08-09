@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class SrsFlvMuxer {
     private static final String TAG = "SrsFlvMuxer";
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static final int VIDEO_ALLOC_SIZE = 128 * 1024;
     private static final int AUDIO_ALLOC_SIZE = 4 * 1024;
