@@ -22,7 +22,7 @@ import com.seu.magicfilter.utils.MagicFilterType;
 import com.zhy.adapter.recyclerview.CommonAdapter;
 import com.zhy.adapter.recyclerview.base.ViewHolder;
 
-import net.ossrs.yasea.SrsCameraView;
+import net.ossrs.yasea.SrsCameraGLSurfaceView;
 import net.ossrs.yasea.SrsEncodeHandler;
 import net.ossrs.yasea.SrsLiveConfig;
 import net.ossrs.yasea.SrsPublisher;
@@ -40,7 +40,7 @@ import java.util.Locale;
  * Created by YoungWu on 2019/7/8.
  */
 public class InternalCameraLiveActivity extends BaseActivity implements View.OnClickListener {
-    private SrsCameraView srsCameraView;
+    private SrsCameraGLSurfaceView srsCameraGLSurfaceView;
     private TextView tv_info;
     private Button btn_start;
     private Button btn_back_camera;
@@ -84,7 +84,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
 
     @Override
     public void initView(Object obj) {
-        srsCameraView = findViewById(R.id.srsCameraView);
+        srsCameraGLSurfaceView = findViewById(R.id.srsCameraView);
         tv_info = findViewById(R.id.tv_info);
         btn_start = findViewById(R.id.btn_start);
         btn_back_camera = findViewById(R.id.btn_back_camera);
@@ -131,7 +131,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         currentEncodeType = 0;
         currentVideoMode = 2;
 
-        publisher = new SrsPublisher(srsCameraView);
+        publisher = new SrsPublisher(srsCameraGLSurfaceView);
         publisher.setEncodeHandler(new SrsEncodeHandler(srsEncodeListener));
         publisher.setRecordHandler(new SrsRecordHandler(srsRecordListener));
         publisher.setRtmpHandler(new RtmpHandler(rtmpListener));
@@ -612,12 +612,12 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
         }
     };
 
-    private SrsCameraView.ErrorCallback errorCallback = error -> handleException();
+    private SrsCameraGLSurfaceView.ErrorCallback errorCallback = error -> handleException();
 
     @Override
     protected void onResume() {
         super.onResume();
-        srsCameraView.onResume();
+        srsCameraGLSurfaceView.onResume();
         if (btn_start.getText().toString().equals("结束直播")) {
             publisher.resumePublish();
         }
@@ -629,7 +629,7 @@ public class InternalCameraLiveActivity extends BaseActivity implements View.OnC
     @Override
     protected void onPause() {
         super.onPause();
-        srsCameraView.onPause();
+        srsCameraGLSurfaceView.onPause();
         if (btn_start_record_video.getText().toString().equals("结束录制")) {
             publisher.pauseRecord();
         }

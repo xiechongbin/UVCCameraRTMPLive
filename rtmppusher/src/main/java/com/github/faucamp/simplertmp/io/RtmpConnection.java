@@ -14,6 +14,7 @@ import com.github.faucamp.simplertmp.packets.Audio;
 import com.github.faucamp.simplertmp.packets.Command;
 import com.github.faucamp.simplertmp.packets.Data;
 import com.github.faucamp.simplertmp.packets.Handshake;
+import com.github.faucamp.simplertmp.packets.RtmpHeader;
 import com.github.faucamp.simplertmp.packets.RtmpPacket;
 import com.github.faucamp.simplertmp.packets.SetPeerBandwidth;
 import com.github.faucamp.simplertmp.packets.UserControl;
@@ -45,8 +46,6 @@ public class RtmpConnection implements RtmpPublisher {
     private static final Pattern rtmpUrlPattern = Pattern.compile("^rtmp://([^/:]+)(:(\\d+))*/([^/]+)(/(.*))*$");
 
     private RtmpHandler mHandler;
-    private int port;
-    private String host;
     private String appName;
     private String streamName;
     private String publishType;
@@ -99,6 +98,8 @@ public class RtmpConnection implements RtmpPublisher {
     @Override
     public boolean connect(String url) {
         Matcher matcher = rtmpUrlPattern.matcher(url);
+        int port;
+        String host;
         if (matcher.matches()) {
             tcUrl = url.substring(0, url.lastIndexOf('/'));
             swfUrl = "";
@@ -521,59 +522,44 @@ public class RtmpConnection implements RtmpPublisher {
                 // It will be blocked when no data in input stream buffer
                 RtmpPacket rtmpPacket = rtmpDecoder.readPacket(inputStream);
                 if (rtmpPacket != null) {
-                    //Log.d(TAG, "handleRxPacketLoop(): RTMP rx packet message type: " + rtmpPacket.getHeader().getMessageType());
-                    switch (rtmpPacket.getHeader().getMessageType()) {
-                        case ABORT:
-                            rtmpSessionInfo.getChunkStreamInfo(((Abort) rtmpPacket).getChunkStreamId()).clearStoredChunks();
-                            break;
-                        case USER_CONTROL_MESSAGE:
-                            UserControl user = (UserControl) rtmpPacket;
-                            switch (user.getType()) {
-                                case STREAM_BEGIN:
-                                    if (DEBUG)
-                                        Log.d(TAG, "handleRxPacketLoop(): Receive STREAM_BEGIN");
-                                    break;
-                                case PING_REQUEST:
-                                    ChunkStreamInfo channelInfo = rtmpSessionInfo.getChunkStreamInfo(ChunkStreamInfo.RTMP_CID_PROTOCOL_CONTROL);
-                                    if (DEBUG)
-                                        Log.d(TAG, "handleRxPacketLoop(): Sending PONG reply..");
-                                    UserControl pong = new UserControl(user, channelInfo);
-                                    sendRtmpPacket(pong);
-                                    break;
-                                case STREAM_EOF:
-                                    if (DEBUG)
-                                        Log.i(TAG, "handleRxPacketLoop(): Stream EOF reached, closing RTMP writer...");
-                                    break;
-                                default:
-                                    // Ignore...
-                                    break;
-                            }
-                            break;
-                        case WINDOW_ACKNOWLEDGEMENT_SIZE:
-                            WindowAckSize windowAckSize = (WindowAckSize) rtmpPacket;
-                            int size = windowAckSize.getAcknowledgementWindowSize();
+                    if (rtmpPacket.getHeader().getMessageType() == RtmpHeader.MessageType.ABORT) {
+                        rtmpSessionInfo.getChunkStreamInfo(((Abort) rtmpPacket).getChunkStreamId()).clearStoredChunks();
+                    } else if (rtmpPacket.getHeader().getMessageType() == RtmpHeader.MessageType.USER_CONTROL_MESSAGE) {
+                        UserControl user = (UserControl) rtmpPacket;
+                        if (user.getType() == UserControl.Type.STREAM_BEGIN) {
                             if (DEBUG)
-                                Log.d(TAG, "handleRxPacketLoop(): Setting acknowledgement window size: " + size);
-                            rtmpSessionInfo.setAcknowledgmentWindowSize(size);
-                            break;
-                        case SET_PEER_BANDWIDTH:
-                            SetPeerBandwidth bw = (SetPeerBandwidth) rtmpPacket;
-                            rtmpSessionInfo.setAcknowledgmentWindowSize(bw.getAcknowledgementWindowSize());
-                            int acknowledgementWindowsize = rtmpSessionInfo.getAcknowledgementWindowSize();
-                            ChunkStreamInfo chunkStreamInfo = rtmpSessionInfo.getChunkStreamInfo(ChunkStreamInfo.RTMP_CID_PROTOCOL_CONTROL);
+                                Log.d(TAG, "handleRxPacketLoop(): Receive STREAM_BEGIN");
+                        } else if (user.getType() == UserControl.Type.PING_REQUEST) {
+                            ChunkStreamInfo channelInfo = rtmpSessionInfo.getChunkStreamInfo(ChunkStreamInfo.RTMP_CID_PROTOCOL_CONTROL);
                             if (DEBUG)
-                                Log.d(TAG, "handleRxPacketLoop(): Send acknowledgement window size: " + acknowledgementWindowsize);
-                            sendRtmpPacket(new WindowAckSize(acknowledgementWindowsize, chunkStreamInfo));
-                            // Set socket option
-                            socket.setSendBufferSize(acknowledgementWindowsize);
-                            break;
-                        case COMMAND_AMF0:
-                            handleRxInvoke((Command) rtmpPacket);
-                            break;
-                        default:
+                                Log.d(TAG, "handleRxPacketLoop(): Sending PONG reply..");
+                            UserControl pong = new UserControl(user, channelInfo);
+                            sendRtmpPacket(pong);
+                        } else if (user.getType() == UserControl.Type.STREAM_EOF) {
                             if (DEBUG)
-                                Log.w(TAG, "handleRxPacketLoop(): Not handling unimplemented/unknown packet of type: " + rtmpPacket.getHeader().getMessageType());
-                            break;
+                                Log.i(TAG, "handleRxPacketLoop(): Stream EOF reached, closing RTMP writer...");
+                        }
+                    } else if (rtmpPacket.getHeader().getMessageType() == RtmpHeader.MessageType.WINDOW_ACKNOWLEDGEMENT_SIZE) {
+                        WindowAckSize windowAckSize = (WindowAckSize) rtmpPacket;
+                        int size = windowAckSize.getAcknowledgementWindowSize();
+                        if (DEBUG)
+                            Log.d(TAG, "handleRxPacketLoop(): Setting acknowledgement window size: " + size);
+                        rtmpSessionInfo.setAcknowledgmentWindowSize(size);
+                    } else if (rtmpPacket.getHeader().getMessageType() == RtmpHeader.MessageType.SET_PEER_BANDWIDTH) {
+                        SetPeerBandwidth bw = (SetPeerBandwidth) rtmpPacket;
+                        rtmpSessionInfo.setAcknowledgmentWindowSize(bw.getAcknowledgementWindowSize());
+                        int acknowledgementWindowSize = rtmpSessionInfo.getAcknowledgementWindowSize();
+                        ChunkStreamInfo chunkStreamInfo = rtmpSessionInfo.getChunkStreamInfo(ChunkStreamInfo.RTMP_CID_PROTOCOL_CONTROL);
+                        if (DEBUG)
+                            Log.d(TAG, "handleRxPacketLoop(): Send acknowledgement window size: " + acknowledgementWindowSize);
+                        sendRtmpPacket(new WindowAckSize(acknowledgementWindowSize, chunkStreamInfo));
+                        // Set socket option
+                        socket.setSendBufferSize(acknowledgementWindowSize);
+                    } else if (rtmpPacket.getHeader().getMessageType() == RtmpHeader.MessageType.COMMAND_AMF0) {
+                        handleRxInvoke((Command) rtmpPacket);
+                    } else {
+                        if (DEBUG)
+                            Log.w(TAG, "handleRxPacketLoop(): Not handling unimplemented/unknown packet of type: " + rtmpPacket.getHeader().getMessageType());
                     }
                 }
             } catch (EOFException eof) {

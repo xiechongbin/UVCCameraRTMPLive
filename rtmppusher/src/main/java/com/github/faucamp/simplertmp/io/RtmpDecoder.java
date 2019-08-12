@@ -53,43 +53,33 @@ public class RtmpDecoder {
         }
 
         RtmpPacket rtmpPacket;
-        switch (header.getMessageType()) {
-            case SET_CHUNK_SIZE:
-                SetChunkSize setChunkSize = new SetChunkSize(header);
-                setChunkSize.readBody(in);
-                if (DEBUG)
-                    Log.d(TAG, "readPacket(): Setting chunk size to: " + setChunkSize.getChunkSize());
-                rtmpSessionInfo.setRxChunkSize(setChunkSize.getChunkSize());
-                return null;
-            case ABORT:
-                rtmpPacket = new Abort(header);
-                break;
-            case USER_CONTROL_MESSAGE:
-                rtmpPacket = new UserControl(header);
-                break;
-            case WINDOW_ACKNOWLEDGEMENT_SIZE:
-                rtmpPacket = new WindowAckSize(header);
-                break;
-            case SET_PEER_BANDWIDTH:
-                rtmpPacket = new SetPeerBandwidth(header);
-                break;
-            case AUDIO:
-                rtmpPacket = new Audio(header);
-                break;
-            case VIDEO:
-                rtmpPacket = new Video(header);
-                break;
-            case COMMAND_AMF0:
-                rtmpPacket = new Command(header);
-                break;
-            case DATA_AMF0:
-                rtmpPacket = new Data(header);
-                break;
-            case ACKNOWLEDGEMENT:
-                rtmpPacket = new Acknowledgement(header);
-                break;
-            default:
-                throw new IOException("No packet body implementation for message type: " + header.getMessageType());
+        if (header.getMessageType() == RtmpHeader.MessageType.SET_CHUNK_SIZE) {
+            SetChunkSize setChunkSize = new SetChunkSize(header);
+            setChunkSize.readBody(in);
+            if (DEBUG)
+                Log.d(TAG, "readPacket(): Setting chunk size to: " + setChunkSize.getChunkSize());
+            rtmpSessionInfo.setRxChunkSize(setChunkSize.getChunkSize());
+            return null;
+        } else if (header.getMessageType() == RtmpHeader.MessageType.ABORT) {
+            rtmpPacket = new Abort(header);
+        } else if (header.getMessageType() == RtmpHeader.MessageType.USER_CONTROL_MESSAGE) {
+            rtmpPacket = new UserControl(header);
+        } else if (header.getMessageType() == RtmpHeader.MessageType.WINDOW_ACKNOWLEDGEMENT_SIZE) {
+            rtmpPacket = new WindowAckSize(header);
+        } else if (header.getMessageType() == RtmpHeader.MessageType.SET_PEER_BANDWIDTH) {
+            rtmpPacket = new SetPeerBandwidth(header);
+        } else if (header.getMessageType() == RtmpHeader.MessageType.AUDIO) {
+            rtmpPacket = new Audio(header);
+        } else if (header.getMessageType() == RtmpHeader.MessageType.VIDEO) {
+            rtmpPacket = new Video(header);
+        } else if (header.getMessageType() == RtmpHeader.MessageType.COMMAND_AMF0) {
+            rtmpPacket = new Command(header);
+        } else if (header.getMessageType() == RtmpHeader.MessageType.DATA_AMF0) {
+            rtmpPacket = new Data(header);
+        } else if (header.getMessageType() == RtmpHeader.MessageType.ACKNOWLEDGEMENT) {
+            rtmpPacket = new Acknowledgement(header);
+        } else {
+            throw new IOException("No packet body implementation for message type: " + header.getMessageType());
         }
         rtmpPacket.readBody(in);
         return rtmpPacket;

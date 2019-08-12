@@ -135,7 +135,7 @@ public class RtmpHeader {
          */
         AGGREGATE_MESSAGE(0x16);
         private byte value;
-        private static final Map<Byte, MessageType> quickLookupMap = new HashMap<Byte, MessageType>();
+        private static final Map<Byte, MessageType> quickLookupMap = new HashMap<>();
 
         static {
             for (MessageType messageTypId : MessageType.values()) {
@@ -188,7 +188,7 @@ public class RtmpHeader {
         /**
          * The full size (in bytes) of this RTMP header (including the basic header byte)
          */
-        private static final Map<Byte, ChunkType> quickLookupMap = new HashMap<Byte, ChunkType>();
+        private static final Map<Byte, ChunkType> quickLookupMap = new HashMap<>();
 
         static {
             for (ChunkType messageTypId : ChunkType.values()) {
@@ -249,119 +249,109 @@ public class RtmpHeader {
         // Read byte 0: chunk type and chunk stream ID
         parseBasicHeader((byte) basicHeaderByte);
 
-        switch (chunkType) {
-            case TYPE_0_FULL: { //  b00 = 12 byte header (full header) 
-                // Read bytes 1-3: Absolute timestamp
-                absoluteTimestamp = Util.readUnsignedInt24(in);
-                timestampDelta = 0;
-                // Read bytes 4-6: Packet length
-                packetLength = Util.readUnsignedInt24(in);
-                // Read byte 7: Message type ID
-                messageType = MessageType.valueOf((byte) in.read());
-                // Read bytes 8-11: Message stream ID (apparently little-endian order)
-                byte[] messageStreamIdBytes = new byte[4];
-                Util.readBytesUntilFull(in, messageStreamIdBytes);
-                messageStreamId = Util.toUnsignedInt32LittleEndian(messageStreamIdBytes);
-                // Read bytes 1-4: Extended timestamp
-                extendedTimestamp = absoluteTimestamp >= 0xffffff ? Util.readUnsignedInt32(in) : 0;
-                if (extendedTimestamp != 0) {
-                    absoluteTimestamp = extendedTimestamp;
-                }
-                break;
+        if (chunkType == ChunkType.TYPE_0_FULL) {
+            // b00 = 12 byte header (full header)
+            // Read bytes 1-3: Absolute timestamp
+            absoluteTimestamp = Util.readUnsignedInt24(in);
+            timestampDelta = 0;
+            // Read bytes 4-6: Packet length
+            packetLength = Util.readUnsignedInt24(in);
+            // Read byte 7: Message type ID
+            messageType = MessageType.valueOf((byte) in.read());
+            // Read bytes 8-11: Message stream ID (apparently little-endian order)
+            byte[] messageStreamIdBytes = new byte[4];
+            Util.readBytesUntilFull(in, messageStreamIdBytes);
+            messageStreamId = Util.toUnsignedInt32LittleEndian(messageStreamIdBytes);
+            // Read bytes 1-4: Extended timestamp
+            extendedTimestamp = absoluteTimestamp >= 0xffffff ? Util.readUnsignedInt32(in) : 0;
+            if (extendedTimestamp != 0) {
+                absoluteTimestamp = extendedTimestamp;
             }
-            case TYPE_1_RELATIVE_LARGE: { // b01 = 8 bytes - like type 0. not including message stream ID (4 last bytes)
-                // Read bytes 1-3: Timestamp delta
-                timestampDelta = Util.readUnsignedInt24(in);
-                // Read bytes 4-6: Packet length
-                packetLength = Util.readUnsignedInt24(in);
-                // Read byte 7: Message type ID
-                messageType = MessageType.valueOf((byte) in.read());
-                // Read bytes 1-4: Extended timestamp delta
-                extendedTimestamp = timestampDelta >= 0xffffff ? Util.readUnsignedInt32(in) : 0;
-                RtmpHeader prevHeader = rtmpSessionInfo.getChunkStreamInfo(chunkStreamId).prevHeaderRx();
-                if (prevHeader != null) {
-                    messageStreamId = prevHeader.messageStreamId;
-                    absoluteTimestamp = extendedTimestamp != 0 ? extendedTimestamp : prevHeader.absoluteTimestamp + timestampDelta;
-                } else {
-                    messageStreamId = 0;
-                    absoluteTimestamp = extendedTimestamp != 0 ? extendedTimestamp : timestampDelta;
-                }
-                break;
-            }
-            case TYPE_2_RELATIVE_TIMESTAMP_ONLY: { // b10 = 4 bytes - Basic Header and timestamp (3 bytes) are included
-                // Read bytes 1-3: Timestamp delta
-                timestampDelta = Util.readUnsignedInt24(in);
-                // Read bytes 1-4: Extended timestamp delta
-                extendedTimestamp = timestampDelta >= 0xffffff ? Util.readUnsignedInt32(in) : 0;
-                RtmpHeader prevHeader = rtmpSessionInfo.getChunkStreamInfo(chunkStreamId).prevHeaderRx();
-                packetLength = prevHeader.packetLength;
-                messageType = prevHeader.messageType;
+        } else if (chunkType == ChunkType.TYPE_1_RELATIVE_LARGE) {
+            // b01 = 8 bytes - like type 0. not including message stream ID (4 last bytes)
+            // Read bytes 1-3: Timestamp delta
+            timestampDelta = Util.readUnsignedInt24(in);
+            // Read bytes 4-6: Packet length
+            packetLength = Util.readUnsignedInt24(in);
+            // Read byte 7: Message type ID
+            messageType = MessageType.valueOf((byte) in.read());
+            // Read bytes 1-4: Extended timestamp delta
+            extendedTimestamp = timestampDelta >= 0xffffff ? Util.readUnsignedInt32(in) : 0;
+            RtmpHeader prevHeader = rtmpSessionInfo.getChunkStreamInfo(chunkStreamId).prevHeaderRx();
+            if (prevHeader != null) {
                 messageStreamId = prevHeader.messageStreamId;
                 absoluteTimestamp = extendedTimestamp != 0 ? extendedTimestamp : prevHeader.absoluteTimestamp + timestampDelta;
-                break;
+            } else {
+                messageStreamId = 0;
+                absoluteTimestamp = extendedTimestamp != 0 ? extendedTimestamp : timestampDelta;
             }
-            case TYPE_3_RELATIVE_SINGLE_BYTE: { // b11 = 1 byte: basic header only 
-                RtmpHeader prevHeader = rtmpSessionInfo.getChunkStreamInfo(chunkStreamId).prevHeaderRx();
-                // Read bytes 1-4: Extended timestamp
-                extendedTimestamp = prevHeader.timestampDelta >= 0xffffff ? Util.readUnsignedInt32(in) : 0;
-                timestampDelta = extendedTimestamp != 0 ? 0xffffff : prevHeader.timestampDelta;
-                packetLength = prevHeader.packetLength;
-                messageType = prevHeader.messageType;
-                messageStreamId = prevHeader.messageStreamId;
-                absoluteTimestamp = extendedTimestamp != 0 ? extendedTimestamp : prevHeader.absoluteTimestamp + timestampDelta;
-                break;
-            }
-            default:
-                throw new IOException("Invalid chunk type; basic header byte was: " + Util.toHexString((byte) basicHeaderByte));
+        } else if (chunkType == ChunkType.TYPE_2_RELATIVE_TIMESTAMP_ONLY) {
+            // b10 = 4 bytes - Basic Header and timestamp (3 bytes) are included
+            // Read bytes 1-3: Timestamp delta
+            timestampDelta = Util.readUnsignedInt24(in);
+            // Read bytes 1-4: Extended timestamp delta
+            extendedTimestamp = timestampDelta >= 0xffffff ? Util.readUnsignedInt32(in) : 0;
+            RtmpHeader prevHeader = rtmpSessionInfo.getChunkStreamInfo(chunkStreamId).prevHeaderRx();
+            packetLength = prevHeader.packetLength;
+            messageType = prevHeader.messageType;
+            messageStreamId = prevHeader.messageStreamId;
+            absoluteTimestamp = extendedTimestamp != 0 ? extendedTimestamp : prevHeader.absoluteTimestamp + timestampDelta;
+        } else if (chunkType == ChunkType.TYPE_3_RELATIVE_SINGLE_BYTE) {
+            // b11 = 1 byte: basic header only
+            RtmpHeader prevHeader = rtmpSessionInfo.getChunkStreamInfo(chunkStreamId).prevHeaderRx();
+            // Read bytes 1-4: Extended timestamp
+            extendedTimestamp = prevHeader.timestampDelta >= 0xffffff ? Util.readUnsignedInt32(in) : 0;
+            timestampDelta = extendedTimestamp != 0 ? 0xffffff : prevHeader.timestampDelta;
+            packetLength = prevHeader.packetLength;
+            messageType = prevHeader.messageType;
+            messageStreamId = prevHeader.messageStreamId;
+            absoluteTimestamp = extendedTimestamp != 0 ? extendedTimestamp : prevHeader.absoluteTimestamp + timestampDelta;
+        } else {
+            throw new IOException("Invalid chunk type; basic header byte was: " + Util.toHexString((byte) basicHeaderByte));
         }
     }
 
     public void writeTo(OutputStream out, ChunkType chunkType, final ChunkStreamInfo chunkStreamInfo) throws IOException {
         // Write basic header byte
         out.write(((byte) (chunkType.getValue() << 6) | chunkStreamId));
-        switch (chunkType) {
-            case TYPE_0_FULL: { //  b00 = 12 byte header (full header)
-                chunkStreamInfo.markDeltaTimestampTx();
-                Util.writeUnsignedInt24(out, (absoluteTimestamp >= 0xffffff) ? 0xffffff : absoluteTimestamp);
-                Util.writeUnsignedInt24(out, packetLength);
-                out.write(messageType.getValue());
-                Util.writeUnsignedInt32LittleEndian(out, messageStreamId);
-                if (absoluteTimestamp >= 0xffffff) {
-                    extendedTimestamp = absoluteTimestamp;
-                    Util.writeUnsignedInt32(out, extendedTimestamp);
-                }
-                break;
+        if (chunkType == ChunkType.TYPE_0_FULL) {
+            // b00 = 12 byte header (full header)
+            chunkStreamInfo.markDeltaTimestampTx();
+            Util.writeUnsignedInt24(out, (absoluteTimestamp >= 0xffffff) ? 0xffffff : absoluteTimestamp);
+            Util.writeUnsignedInt24(out, packetLength);
+            out.write(messageType.getValue());
+            Util.writeUnsignedInt32LittleEndian(out, messageStreamId);
+            if (absoluteTimestamp >= 0xffffff) {
+                extendedTimestamp = absoluteTimestamp;
+                Util.writeUnsignedInt32(out, extendedTimestamp);
             }
-            case TYPE_1_RELATIVE_LARGE: { // b01 = 8 bytes - like type 0. not including message ID (4 last bytes)
-                timestampDelta = (int) chunkStreamInfo.markDeltaTimestampTx();
-                absoluteTimestamp = chunkStreamInfo.getPrevHeaderTx().getAbsoluteTimestamp() + timestampDelta;
-                Util.writeUnsignedInt24(out, (absoluteTimestamp >= 0xffffff) ? 0xffffff : timestampDelta);
-                Util.writeUnsignedInt24(out, packetLength);
-                out.write(messageType.getValue());
-                if (absoluteTimestamp >= 0xffffff) {
-                    extendedTimestamp = absoluteTimestamp;
-                    Util.writeUnsignedInt32(out, absoluteTimestamp);
-                }
-                break;
+        } else if (chunkType == ChunkType.TYPE_1_RELATIVE_LARGE) {
+            // b01 = 8 bytes - like type 0. not including message ID (4 last bytes)
+            timestampDelta = (int) chunkStreamInfo.markDeltaTimestampTx();
+            absoluteTimestamp = chunkStreamInfo.getPrevHeaderTx().getAbsoluteTimestamp() + timestampDelta;
+            Util.writeUnsignedInt24(out, (absoluteTimestamp >= 0xffffff) ? 0xffffff : timestampDelta);
+            Util.writeUnsignedInt24(out, packetLength);
+            out.write(messageType.getValue());
+            if (absoluteTimestamp >= 0xffffff) {
+                extendedTimestamp = absoluteTimestamp;
+                Util.writeUnsignedInt32(out, absoluteTimestamp);
             }
-            case TYPE_2_RELATIVE_TIMESTAMP_ONLY: { // b10 = 4 bytes - Basic Header and timestamp (3 bytes) are included
-                timestampDelta = (int) chunkStreamInfo.markDeltaTimestampTx();
-                absoluteTimestamp = chunkStreamInfo.getPrevHeaderTx().getAbsoluteTimestamp() + timestampDelta;
-                Util.writeUnsignedInt24(out, (absoluteTimestamp >= 0xffffff) ? 0xffffff : timestampDelta);
-                if (absoluteTimestamp >= 0xffffff) {
-                    extendedTimestamp = absoluteTimestamp;
-                    Util.writeUnsignedInt32(out, extendedTimestamp);
-                }
-                break;
+        } else if (chunkType == ChunkType.TYPE_2_RELATIVE_TIMESTAMP_ONLY) {
+            // b10 = 4 bytes - Basic Header and timestamp (3 bytes) are included
+            timestampDelta = (int) chunkStreamInfo.markDeltaTimestampTx();
+            absoluteTimestamp = chunkStreamInfo.getPrevHeaderTx().getAbsoluteTimestamp() + timestampDelta;
+            Util.writeUnsignedInt24(out, (absoluteTimestamp >= 0xffffff) ? 0xffffff : timestampDelta);
+            if (absoluteTimestamp >= 0xffffff) {
+                extendedTimestamp = absoluteTimestamp;
+                Util.writeUnsignedInt32(out, extendedTimestamp);
             }
-            case TYPE_3_RELATIVE_SINGLE_BYTE: { // b11 = 1 byte: basic header only
-                if (extendedTimestamp > 0) {
-                    Util.writeUnsignedInt32(out, extendedTimestamp);
-                }
-                break;
+        } else if (chunkType == ChunkType.TYPE_3_RELATIVE_SINGLE_BYTE) {
+            // b11 = 1 byte: basic header only
+            if (extendedTimestamp > 0) {
+                Util.writeUnsignedInt32(out, extendedTimestamp);
             }
-            default:
-                throw new IOException("Invalid chunk type: " + chunkType);
+        } else {
+            throw new IOException("Invalid chunk type: " + chunkType);
         }
     }
 

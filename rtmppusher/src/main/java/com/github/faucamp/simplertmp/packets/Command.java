@@ -19,9 +19,6 @@ import java.io.OutputStream;
  * @author francois
  */
 public class Command extends VariableBodyRtmpPacket {
-
-    private static final String TAG = "Command";
-
     private String commandName;
     private int transactionId;
 

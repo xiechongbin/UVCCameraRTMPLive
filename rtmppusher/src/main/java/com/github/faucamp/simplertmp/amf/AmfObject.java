@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class AmfObject implements AmfData {
 
-    protected Map<String, AmfData> properties = new LinkedHashMap<String, AmfData>();
+    protected Map<String, AmfData> properties = new LinkedHashMap<>();
     protected int size = -1;
     /**
      * Byte sequence that marks the end of an AMF object
@@ -104,7 +104,6 @@ public class AmfObject implements AmfData {
                 size += entry.getValue().getSize();
             }
             size += 3; // end of object marker
-
         }
         return size;
     }

@@ -3,6 +3,7 @@ package net.ossrs.yasea;
 import android.media.AudioRecord;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.AutomaticGainControl;
+import android.util.Log;
 
 import com.github.faucamp.simplertmp.RtmpHandler;
 import com.seu.magicfilter.utils.MagicFilterType;
@@ -13,12 +14,14 @@ import java.io.File;
  * Created by Leo Ma on 2016/7/25.
  */
 public class SrsPublisher {
+    private static final String TAG = "SrsPublisher";
+
     private static AudioRecord mic;
     private static AcousticEchoCanceler aec;
     private static AutomaticGainControl agc;
     private byte[] mPcmBuffer = new byte[4096];
     private Thread aWorker;
-    private SrsCameraView mCameraView;
+    private SrsCameraGLSurfaceView mCameraView;
     private boolean sendVideoOnly = false;
     private boolean sendAudioOnly = false;
     private int videoFrameCount;
@@ -29,9 +32,9 @@ public class SrsPublisher {
     private SrsMp4Muxer mMp4Muxer;
     private SrsEncoder mEncoder;
 
-    public SrsPublisher(SrsCameraView view) {
+    public SrsPublisher(SrsCameraGLSurfaceView view) {
         mCameraView = view;
-        mCameraView.setPreviewCallback(new SrsCameraView.PreviewCallback() {
+        mCameraView.setPreviewCallback(new SrsCameraGLSurfaceView.PreviewCallback() {
             @Override
             public void onGetRgbaFrame(byte[] data, int width, int height) {
                 calcSamplingFps();
@@ -91,14 +94,22 @@ public class SrsPublisher {
         if (AcousticEchoCanceler.isAvailable()) {
             aec = AcousticEchoCanceler.create(mic.getAudioSessionId());
             if (aec != null) {
-                aec.setEnabled(true);
+                try {
+                    aec.setEnabled(true);
+                } catch (Exception e) {
+                    Log.e(TAG, "AcousticEchoCanceler can't setEnabled(true)");
+                }
             }
         }
 
         if (AutomaticGainControl.isAvailable()) {
             agc = AutomaticGainControl.create(mic.getAudioSessionId());
             if (agc != null) {
-                agc.setEnabled(true);
+                try {
+                    agc.setEnabled(true);
+                } catch (Exception e) {
+                    Log.e(TAG, "AutomaticGainControl can't setEnabled(true)");
+                }
             }
         }
 
@@ -106,13 +117,17 @@ public class SrsPublisher {
             @Override
             public void run() {
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
-                mic.startRecording();
+                try {
+                    mic.startRecording();
+                } catch (Exception e) {
+                    Log.e(TAG, "AudioRecord startRecording failed.");
+                }
                 while (!Thread.interrupted()) {
                     if (sendVideoOnly) {
                         mEncoder.onGetPcmFrame(mPcmBuffer, mPcmBuffer.length);
                         try {
                             // This is trivial...
-                            Thread.sleep(20);
+                            Thread.sleep(200);
                         } catch (InterruptedException e) {
                             break;
                         }
@@ -121,6 +136,8 @@ public class SrsPublisher {
                             int size = mic.read(mPcmBuffer, 0, mPcmBuffer.length);
                             if (size > 0) {
                                 mEncoder.onGetPcmFrame(mPcmBuffer, size);
+                            } else {
+                                Log.e(TAG, "AudioRecord reading failed , code = " + size);
                             }
                         }
                     }
@@ -143,21 +160,30 @@ public class SrsPublisher {
 
         if (mic != null) {
             mic.setRecordPositionUpdateListener(null);
-            mic.stop();
-            mic.release();
-            mic = null;
+            try {
+                mic.stop();
+            } finally {
+                mic.release();
+                mic = null;
+            }
         }
 
         if (aec != null) {
-            aec.setEnabled(false);
-            aec.release();
-            aec = null;
+            try {
+                aec.setEnabled(false);
+            } finally {
+                aec.release();
+                aec = null;
+            }
         }
 
         if (agc != null) {
-            agc.setEnabled(false);
-            agc.release();
-            agc = null;
+            try {
+                agc.setEnabled(false);
+            } finally {
+                agc.release();
+                agc = null;
+            }
         }
     }
 
@@ -349,7 +375,7 @@ public class SrsPublisher {
         }
     }
 
-    public void setErrorCallback(SrsCameraView.ErrorCallback errorCallback) {
+    public void setErrorCallback(SrsCameraGLSurfaceView.ErrorCallback errorCallback) {
         mCameraView.setErrorCallback(errorCallback);
     }
 }

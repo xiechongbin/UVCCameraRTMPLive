@@ -9,9 +9,9 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.util.Log;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -83,7 +83,7 @@ public class SrsEncoder {
 
     public SrsEncoder(SrsEncodeHandler handler) {
         mHandler = handler;
-        mVideoColorFormat = chooseVideoEncoder();
+        vMci = chooseVideoEncoder();
     }
 
     public void setFlvMuxer(SrsFlvMuxer flvMuxer) {
@@ -105,8 +105,8 @@ public class SrsEncoder {
         // Note: the stride of resolution must be set as 16x for hard encoding with some chip like MTK
         // Since Y component is quadruple size as U and V component, the stride must be set as 32x
         if (!useSoftEncoder && (vOutWidth % 32 != 0 || vOutHeight % 32 != 0)) {
-            if (vMci.getName().contains("MTK")) {
-//                throw new AssertionError("MTK encoding revolution stride must be 32x");
+            if (vMci != null && vMci.getName().contains("MTK")) {
+                Log.e(TAG, "MTK encoding revolution stride must be 32x");
             }
         }
 
@@ -132,8 +132,8 @@ public class SrsEncoder {
         // requires sdk level 16+, Android 4.1, 4.1.1, the JELLY_BEAN
         try {
             aEncoder = MediaCodec.createEncoderByType(aCodec);
-        } catch (IOException e) {
-            if (DEBUG) Log.e(TAG, "create aEncoder failed.");
+        } catch (Exception e) {
+            Log.e(TAG, "create aEncoder failed.");
             e.printStackTrace();
             return false;
         }
@@ -153,8 +153,8 @@ public class SrsEncoder {
         // requires sdk level 16+, Android 4.1, 4.1.1, the JELLY_BEAN
         try {
             vEncoder = MediaCodec.createByCodecName(vMci.getName());
-        } catch (IOException e) {
-            if (DEBUG) Log.e(TAG, "create vEncoder failed.");
+        } catch (Exception e) {
+            Log.e(TAG, "create vEncoder failed.");
             e.printStackTrace();
             return false;
         }
@@ -296,8 +296,8 @@ public class SrsEncoder {
         // Note: the stride of resolution must be set as 16x for hard encoding with some chip like MTK
         // Since Y component is quadruple size as U and V component, the stride must be set as 32x
         if (!useSoftEncoder && (vOutWidth % 32 != 0 || vOutHeight % 32 != 0)) {
-            if (vMci.getName().contains("MTK")) {
-//                throw new AssertionError("MTK encoding revolution stride must be 32x");
+            if (vMci != null && vMci.getName().contains("MTK")) {
+                Log.e(TAG, "MTK encoding revolution stride must be 32x");
             }
         }
 
@@ -308,26 +308,51 @@ public class SrsEncoder {
         if (vEncoder == null) {
             return;
         }
-        ByteBuffer[] inBuffers = vEncoder.getInputBuffers();
-        ByteBuffer[] outBuffers = vEncoder.getOutputBuffers();
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+            ByteBuffer[] inBuffers = vEncoder.getInputBuffers();
+            ByteBuffer[] outBuffers = vEncoder.getOutputBuffers();
 
-        int inBufferIndex = vEncoder.dequeueInputBuffer(-1);
-        if (inBufferIndex >= 0) {
-            ByteBuffer bb = inBuffers[inBufferIndex];
-            bb.clear();
-            bb.put(yuvFrame, 0, yuvFrame.length);
-            vEncoder.queueInputBuffer(inBufferIndex, 0, yuvFrame.length, pts, 0);
-        }
+            int inBufferIndex = vEncoder.dequeueInputBuffer(-1);
+            if (inBufferIndex >= 0) {
+                ByteBuffer bb = inBuffers[inBufferIndex];
+                bb.clear();
+                bb.put(yuvFrame, 0, yuvFrame.length);
+                vEncoder.queueInputBuffer(inBufferIndex, 0, yuvFrame.length, pts, 0);
+            }
 
-        for (; ; ) {
-            MediaCodec.BufferInfo vEbi = new MediaCodec.BufferInfo();
-            int outBufferIndex = vEncoder.dequeueOutputBuffer(vEbi, 0);
-            if (outBufferIndex >= 0) {
-                ByteBuffer bb = outBuffers[outBufferIndex];
-                onEncodedAnnexBFrame(bb, vEbi);
-                vEncoder.releaseOutputBuffer(outBufferIndex, false);
-            } else {
-                break;
+            for (; ; ) {
+                MediaCodec.BufferInfo vEbi = new MediaCodec.BufferInfo();
+                int outBufferIndex = vEncoder.dequeueOutputBuffer(vEbi, 0);
+                if (outBufferIndex >= 0) {
+                    ByteBuffer bb = outBuffers[outBufferIndex];
+                    onEncodedAnnexBFrame(bb, vEbi);
+                    vEncoder.releaseOutputBuffer(outBufferIndex, false);
+                } else {
+                    break;
+                }
+            }
+        } else {
+            int inBufferIndex = vEncoder.dequeueInputBuffer(-1);
+            if (inBufferIndex >= 0) {
+                ByteBuffer bb = vEncoder.getInputBuffer(inBufferIndex);
+                if (bb != null) {
+                    bb.put(yuvFrame, 0, yuvFrame.length);
+                }
+                vEncoder.queueInputBuffer(inBufferIndex, 0, yuvFrame.length, pts, 0);
+            }
+
+            for (; ; ) {
+                MediaCodec.BufferInfo vEbi = new MediaCodec.BufferInfo();
+                int outBufferIndex = vEncoder.dequeueOutputBuffer(vEbi, 0);
+                if (outBufferIndex >= 0) {
+                    ByteBuffer bb = vEncoder.getOutputBuffer(outBufferIndex);
+                    if (bb != null) {
+                        onEncodedAnnexBFrame(bb, vEbi);
+                    }
+                    vEncoder.releaseOutputBuffer(outBufferIndex, false);
+                } else {
+                    break;
+                }
             }
         }
     }
@@ -364,29 +389,58 @@ public class SrsEncoder {
         if (flvMuxer == null || aEncoder == null) {
             return;
         }
-        AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
-        if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
-            ByteBuffer[] inBuffers = aEncoder.getInputBuffers();
-            ByteBuffer[] outBuffers = aEncoder.getOutputBuffers();
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+            AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
+            if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
+                ByteBuffer[] inBuffers = aEncoder.getInputBuffers();
+                ByteBuffer[] outBuffers = aEncoder.getOutputBuffers();
 
-            int inBufferIndex = aEncoder.dequeueInputBuffer(-1);
-            if (inBufferIndex >= 0) {
-                ByteBuffer bb = inBuffers[inBufferIndex];
-                bb.clear();
-                bb.put(data, 0, size);
-                long pts = System.nanoTime() / 1000 - mPresentTime;
-                aEncoder.queueInputBuffer(inBufferIndex, 0, size, pts, 0);
+                int inBufferIndex = aEncoder.dequeueInputBuffer(-1);
+                if (inBufferIndex >= 0) {
+                    ByteBuffer bb = inBuffers[inBufferIndex];
+                    bb.clear();
+                    bb.put(data, 0, size);
+                    long pts = System.nanoTime() / 1000 - mPresentTime;
+                    aEncoder.queueInputBuffer(inBufferIndex, 0, size, pts, 0);
+                }
+
+                for (; ; ) {
+                    MediaCodec.BufferInfo aEbi = new MediaCodec.BufferInfo();
+                    int outBufferIndex = aEncoder.dequeueOutputBuffer(aEbi, 0);
+                    if (outBufferIndex >= 0) {
+                        ByteBuffer bb = outBuffers[outBufferIndex];
+                        onEncodedAacFrame(bb, aEbi);
+                        aEncoder.releaseOutputBuffer(outBufferIndex, false);
+                    } else {
+                        break;
+                    }
+                }
             }
+        } else {
+            AtomicInteger videoFrameCacheNumber = flvMuxer.getVideoFrameCacheNumber();
+            if (videoFrameCacheNumber != null && videoFrameCacheNumber.get() < vGOP) {
+                int inBufferIndex = aEncoder.dequeueInputBuffer(-1);
+                if (inBufferIndex >= 0) {
+                    ByteBuffer bb = aEncoder.getInputBuffer(inBufferIndex);
+                    if (bb != null) {
+                        bb.put(data, 0, size);
+                    }
+                    long pts = System.nanoTime() / 1000 - mPresentTime;
+                    aEncoder.queueInputBuffer(inBufferIndex, 0, size, pts, 0);
+                }
 
-            for (; ; ) {
-                MediaCodec.BufferInfo aEbi = new MediaCodec.BufferInfo();
-                int outBufferIndex = aEncoder.dequeueOutputBuffer(aEbi, 0);
-                if (outBufferIndex >= 0) {
-                    ByteBuffer bb = outBuffers[outBufferIndex];
-                    onEncodedAacFrame(bb, aEbi);
-                    aEncoder.releaseOutputBuffer(outBufferIndex, false);
-                } else {
-                    break;
+                for (; ; ) {
+                    MediaCodec.BufferInfo aEbi = new MediaCodec.BufferInfo();
+                    int outBufferIndex = aEncoder.dequeueOutputBuffer(aEbi, 0);
+                    if (outBufferIndex >= 0) {
+                        ByteBuffer bb = aEncoder.getOutputBuffer(outBufferIndex);
+                        if (bb != null) {
+                            onEncodedAacFrame(bb, aEbi);
+                        }
+                        aEncoder.releaseOutputBuffer(outBufferIndex, false);
+                    } else {
+                        break;
+                    }
                 }
             }
         }
@@ -532,46 +586,42 @@ public class SrsEncoder {
     }
 
     private byte[] hwRgbaFrame(byte[] data, int width, int height) {
-        switch (mVideoColorFormat) {
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar:
-                return RGBAToI420(data, width, height, true, 180);
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar:
-                return RGBAToNV12(data, width, height, true, 180);
-            default:
-                throw new IllegalStateException("Unsupported color format!");
+        if (mVideoColorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+            return RGBAToI420(data, width, height, true, 180);
+        } else if (mVideoColorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
+            return RGBAToNV12(data, width, height, true, 180);
+        } else {
+            throw new IllegalStateException("Unsupported color format!");
         }
     }
 
     private byte[] hwYUVNV21FrameScaled(byte[] data, int width, int height, Rect boundingBox) {
-        switch (mVideoColorFormat) {
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar:
-                return NV21ToI420Scaled(data, width, height, true, 180, boundingBox.left, boundingBox.top, boundingBox.width(), boundingBox.height());
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar:
-                return NV21ToNV12Scaled(data, width, height, true, 180, boundingBox.left, boundingBox.top, boundingBox.width(), boundingBox.height());
-            default:
-                throw new IllegalStateException("Unsupported color format!");
+        if (mVideoColorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+            return NV21ToI420Scaled(data, width, height, true, 180, boundingBox.left, boundingBox.top, boundingBox.width(), boundingBox.height());
+        } else if (mVideoColorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
+            return NV21ToNV12Scaled(data, width, height, true, 180, boundingBox.left, boundingBox.top, boundingBox.width(), boundingBox.height());
+        } else {
+            throw new IllegalStateException("Unsupported color format!");
         }
     }
 
     private byte[] hwArgbFrameScaled(int[] data, int width, int height, Rect boundingBox) {
-        switch (mVideoColorFormat) {
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar:
-                return ARGBToI420Scaled(data, width, height, false, 0, boundingBox.left, boundingBox.top, boundingBox.width(), boundingBox.height());
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar:
-                return ARGBToNV12Scaled(data, width, height, false, 0, boundingBox.left, boundingBox.top, boundingBox.width(), boundingBox.height());
-            default:
-                throw new IllegalStateException("Unsupported color format!");
+        if (mVideoColorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+            return ARGBToI420Scaled(data, width, height, false, 0, boundingBox.left, boundingBox.top, boundingBox.width(), boundingBox.height());
+        } else if (mVideoColorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
+            return ARGBToNV12Scaled(data, width, height, false, 0, boundingBox.left, boundingBox.top, boundingBox.width(), boundingBox.height());
+        } else {
+            throw new IllegalStateException("Unsupported color format!");
         }
     }
 
     private byte[] hwArgbFrame(int[] data, int inputWidth, int inputHeight) {
-        switch (mVideoColorFormat) {
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar:
-                return ARGBToI420(data, inputWidth, inputHeight, false, 0);
-            case MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar:
-                return ARGBToNV12(data, inputWidth, inputHeight, false, 0);
-            default:
-                throw new IllegalStateException("Unsupported color format!");
+        if (mVideoColorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+            return ARGBToI420(data, inputWidth, inputHeight, false, 0);
+        } else if (mVideoColorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
+            return ARGBToNV12(data, inputWidth, inputHeight, false, 0);
+        } else {
+            throw new IllegalStateException("Unsupported color format!");
         }
     }
 
@@ -617,28 +667,56 @@ public class SrsEncoder {
     }
 
     /**
+     * color formats that we can use in this class
+     */
+    private static int[] recognizedFormats = new int[]{
+            MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar,
+            MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
+    };
+
+    /**
      * choose the video encoder by name.
      */
-    private MediaCodecInfo chooseVideoEncoder(String name) {
-        int nbCodecs = MediaCodecList.getCodecCount();
-        for (int i = 0; i < nbCodecs; i++) {
-            MediaCodecInfo mci = MediaCodecList.getCodecInfoAt(i);
-            if (!mci.isEncoder()) {
-                continue;
-            }
-            String[] types = mci.getSupportedTypes();
-            for (String type : types) {
-                if (type.equalsIgnoreCase(vCodec)) {
-                    if (DEBUG)
-                        Log.i(TAG, String.format("vEncoder %s types: %s", mci.getName(), type));
-                    if (name == null) {
-                        return mci;
+    private MediaCodecInfo chooseVideoEncoder() {
+        try {
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+                int nbCodecs = MediaCodecList.getCodecCount();
+                for (int i = 0; i < nbCodecs; i++) {
+                    MediaCodecInfo mci = MediaCodecList.getCodecInfoAt(i);
+                    if (!mci.isEncoder()) {
+                        continue;
                     }
-                    if (mci.getName().contains(name)) {
-                        return mci;
+                    String[] types = mci.getSupportedTypes();
+                    for (String type : types) {
+                        if (type.equalsIgnoreCase(vCodec)) {
+                            if (DEBUG)
+                                Log.i(TAG, String.format("vEncoder %s types: %s", mci.getName(), type));
+                            mVideoColorFormat = chooseVideoColorFormat(mci);
+                            return mci;
+                        }
+                    }
+                }
+            } else {
+                MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+                MediaCodecInfo[] mcis = mediaCodecList.getCodecInfos();
+                for (MediaCodecInfo mci : mcis) {
+                    if (!mci.isEncoder()) {
+                        continue;
+                    }
+                    String[] types = mci.getSupportedTypes();
+                    for (String type : types) {
+                        if (type.equalsIgnoreCase(vCodec)) {
+                            if (DEBUG)
+                                Log.i(TAG, String.format("vEncoder %s types: %s", mci.getName(), type));
+                            mVideoColorFormat = chooseVideoColorFormat(mci);
+                            return mci;
+                        }
                     }
                 }
             }
+        } catch (Exception e) {
+            Log.e(TAG, "choose video encoder failed.");
+            e.printStackTrace();
         }
         return null;
     }
@@ -651,38 +729,42 @@ public class SrsEncoder {
      * 2. google avc is unusable.
      * 3. choose qcom avc.
      */
-    private int chooseVideoEncoder() {
-        vMci = chooseVideoEncoder(null);
-        //vmci = chooseVideoEncoder("google");
-        //vmci = chooseVideoEncoder("qcom");
-
+    private int chooseVideoColorFormat(MediaCodecInfo mci) {
         int matchedColorFormat = 0;
-        if (vMci == null) {
-            return matchedColorFormat;
+        MediaCodecInfo.CodecCapabilities cc;
+        try {
+            Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+            cc = mci.getCapabilitiesForType(vCodec);
+        } finally {
+            Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
         }
-        MediaCodecInfo.CodecCapabilities cc = vMci.getCapabilitiesForType(vCodec);
-        for (int i = 0; i < cc.colorFormats.length; i++) {
-            int cf = cc.colorFormats[i];
+        for (int cf : cc.colorFormats) {
             if (DEBUG)
-                Log.i(TAG, String.format("vEncoder %s supports color fomart 0x%x(%d)", vMci.getName(), cf, cf));
+                Log.i(TAG, String.format("vEncoder %s supports color format 0x%x(%d)", mci.getName(), cf, cf));
 
             // choose YUV for h.264, prefer the bigger one.
             // corresponding to the color space transform in onPreviewFrame
-            if (cf >= MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar && cf <= MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
-                if (cf > matchedColorFormat) {
+            for (int recognizedFormat : recognizedFormats) {
+                if (cf == recognizedFormat) {
                     matchedColorFormat = cf;
+                    break;
                 }
+            }
+            if (matchedColorFormat > 0) {
+                break;
             }
         }
 
-        for (int i = 0; i < cc.profileLevels.length; i++) {
-            MediaCodecInfo.CodecProfileLevel pl = cc.profileLevels[i];
+        for (MediaCodecInfo.CodecProfileLevel pl : cc.profileLevels) {
             if (DEBUG)
-                Log.i(TAG, String.format("vEncoder %s support profile %d, level %d", vMci.getName(), pl.profile, pl.level));
+                Log.i(TAG, String.format("vEncoder %s support profile %d, level %d", mci.getName(), pl.profile, pl.level));
         }
-
-        if (DEBUG)
-            Log.i(TAG, String.format("vEncoder %s choose color format 0x%x(%d)", vMci.getName(), matchedColorFormat, matchedColorFormat));
+        if (matchedColorFormat == 0) {
+            Log.e(TAG, "couldn't find a good color format for " + mci.getName() + " / " + vCodec);
+        } else {
+            if (DEBUG)
+                Log.i(TAG, String.format("vEncoder %s choose color format 0x%x(%d)", mci.getName(), matchedColorFormat, matchedColorFormat));
+        }
         return matchedColorFormat;
     }
 
@@ -702,6 +784,7 @@ public class SrsEncoder {
             output[frameSize + i * 2] = input[frameSize + i + qFrameSize]; // Cb (U)
             output[frameSize + i * 2 + 1] = input[frameSize + i]; // Cr (V)
         }
+
         return output;
     }
 

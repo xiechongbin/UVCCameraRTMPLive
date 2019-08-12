@@ -21,7 +21,7 @@ import com.github.faucamp.simplertmp.RtmpHandler;
 import com.orhanobut.logger.Logger;
 import com.serenegiant.usb.USBMonitor;
 import com.seu.magicfilter.utils.MagicFilterType;
-import com.youngwu.live.UVCCameraView;
+import com.youngwu.live.UVCCameraGLSurfaceView;
 import com.youngwu.live.UVCPublisher;
 import com.zhy.adapter.recyclerview.CommonAdapter;
 import com.zhy.adapter.recyclerview.base.ViewHolder;
@@ -42,7 +42,7 @@ import java.util.Locale;
  * Created by YoungWu on 2019/7/8.
  */
 public class ExternalCameraLiveActivity extends BaseActivity implements View.OnClickListener {
-    private UVCCameraView uvcCameraView;
+    private UVCCameraGLSurfaceView uvcCameraGLSurfaceView;
     private TextView tv_info;
     private Button btn_start;
     private Button btn_soft_encoder;
@@ -85,7 +85,7 @@ public class ExternalCameraLiveActivity extends BaseActivity implements View.OnC
 
     @Override
     public void initView(Object obj) {
-        uvcCameraView = findViewById(R.id.uvcCameraView);
+        uvcCameraGLSurfaceView = findViewById(R.id.uvcCameraView);
         tv_info = findViewById(R.id.tv_info);
         btn_start = findViewById(R.id.btn_start);
         btn_soft_encoder = findViewById(R.id.btn_soft_encoder);
@@ -173,7 +173,7 @@ public class ExternalCameraLiveActivity extends BaseActivity implements View.OnC
         currentEncodeType = 0;
         currentVideoMode = 2;
 
-        publisher = new UVCPublisher(uvcCameraView);
+        publisher = new UVCPublisher(uvcCameraGLSurfaceView);
         publisher.setEncodeHandler(new SrsEncodeHandler(srsEncodeListener));
         publisher.setRecordHandler(new SrsRecordHandler(srsRecordListener));
         publisher.setRtmpHandler(new RtmpHandler(rtmpListener));
@@ -622,14 +622,14 @@ public class ExternalCameraLiveActivity extends BaseActivity implements View.OnC
         }
     };
 
-    private UVCCameraView.ErrorCallback errorCallback = error -> handleException();
+    private UVCCameraGLSurfaceView.ErrorCallback errorCallback = error -> handleException();
 
 
     @Override
     protected void onResume() {
         super.onResume();
         usbMonitor.register();
-        uvcCameraView.onResume();
+        uvcCameraGLSurfaceView.onResume();
         if (btn_start.getText().toString().equals("结束直播")) {
             publisher.resumePublish();
         }
@@ -642,7 +642,7 @@ public class ExternalCameraLiveActivity extends BaseActivity implements View.OnC
     protected void onPause() {
         super.onPause();
         usbMonitor.unregister();
-        uvcCameraView.onPause();
+        uvcCameraGLSurfaceView.onPause();
         if (btn_start_record_video.getText().toString().equals("结束录制")) {
             publisher.pauseRecord();
         }

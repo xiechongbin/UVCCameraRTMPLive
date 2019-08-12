@@ -19,7 +19,7 @@ public class AmfArray implements AmfData {
     private int size = -1;
 
     @Override
-    public void writeTo(OutputStream out) throws IOException {
+    public void writeTo(OutputStream out) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -28,7 +28,7 @@ public class AmfArray implements AmfData {
         // Skip data type byte (we assume it's already read)
         int length = Util.readUnsignedInt32(in);
         size = 5; // 1 + 4
-        items = new ArrayList<AmfData>(length);
+        items = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
             AmfData dataItem = AmfDecoder.readFrom(in);
             size += dataItem.getSize();
@@ -56,14 +56,4 @@ public class AmfArray implements AmfData {
         return items != null ? items.size() : 0;
     }
 
-    public List<AmfData> getItems() {
-        if (items == null) {
-            items = new ArrayList<AmfData>();
-        }
-        return items;
-    }
-
-    public void addItem(AmfData dataItem) {
-        getItems().add(this);
-    }
 }

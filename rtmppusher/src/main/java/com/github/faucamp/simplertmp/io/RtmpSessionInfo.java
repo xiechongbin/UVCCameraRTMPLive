@@ -29,8 +29,8 @@ public class RtmpSessionInfo {
      */
     private int rxChunkSize = 128;
     private int txChunkSize = 128;
-    private Map<Integer, ChunkStreamInfo> chunkChannels = new HashMap<Integer, ChunkStreamInfo>();
-    private Map<Integer, String> invokedMethods = new ConcurrentHashMap<Integer, String>();
+    private Map<Integer, ChunkStreamInfo> chunkChannels = new HashMap<>();
+    private Map<Integer, String> invokedMethods = new ConcurrentHashMap<>();
 
     public ChunkStreamInfo getChunkStreamInfo(int chunkStreamId) {
         ChunkStreamInfo chunkStreamInfo = chunkChannels.get(chunkStreamId);

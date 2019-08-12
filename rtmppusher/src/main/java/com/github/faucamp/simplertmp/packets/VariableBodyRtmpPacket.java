@@ -48,7 +48,7 @@ public abstract class VariableBodyRtmpPacket extends RtmpPacket {
 
     public void addData(AmfData dataItem) {
         if (data == null) {
-            this.data = new ArrayList<AmfData>();
+            this.data = new ArrayList<>();
         }
         if (dataItem == null) {
             dataItem = new AmfNull();

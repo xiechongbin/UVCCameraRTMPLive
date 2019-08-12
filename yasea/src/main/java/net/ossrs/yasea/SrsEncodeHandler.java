@@ -41,17 +41,14 @@ public class SrsEncodeHandler extends Handler {
             return;
         }
 
-        switch (msg.what) {
-            case MSG_ENCODE_NETWORK_WEAK:
-                listener.onNetworkWeak();
-                break;
-            case MSG_ENCODE_NETWORK_RESUME:
-                listener.onNetworkResume();
-                break;
-            case MSG_ENCODE_ILLEGAL_ARGUMENT_EXCEPTION:
-                listener.onEncodeIllegalArgumentException((IllegalArgumentException) msg.obj);
-            default:
-                throw new RuntimeException("unknown msg " + msg.what);
+        if (msg.what == MSG_ENCODE_NETWORK_WEAK) {
+            listener.onNetworkWeak();
+        } else if (msg.what == MSG_ENCODE_NETWORK_RESUME) {
+            listener.onNetworkResume();
+        } else if (msg.what == MSG_ENCODE_ILLEGAL_ARGUMENT_EXCEPTION) {
+            listener.onEncodeIllegalArgumentException((IllegalArgumentException) msg.obj);
+        } else {
+            throw new RuntimeException("unknown msg " + msg.what);
         }
     }
 

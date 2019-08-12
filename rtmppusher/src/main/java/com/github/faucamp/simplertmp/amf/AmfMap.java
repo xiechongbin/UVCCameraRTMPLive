@@ -37,7 +37,7 @@ public class AmfMap extends AmfObject {
     @Override
     public void readFrom(InputStream in) throws IOException {
         // Skip data type byte (we assume it's already read)
-        int length = Util.readUnsignedInt32(in); // Seems this is always 0
+        Util.readUnsignedInt32(in); // Seems this is always 0
         super.readFrom(in);
         size += 4; // Add the bytes read for parsing the array size (length)
     }

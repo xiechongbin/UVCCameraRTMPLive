@@ -42,85 +42,84 @@ import com.seu.magicfilter.base.gpuimage.GPUImageFilter;
 public class MagicFilterFactory {
 
     public static GPUImageFilter initFilters(MagicFilterType type) {
-        switch (type) {
-            case NONE:
-                return new GPUImageFilter();
-            case WHITECAT:
-                return new MagicWhiteCatFilter();
-            case BLACKCAT:
-                return new MagicBlackCatFilter();
-            case SKINWHITEN:
-                return new MagicSkinWhitenFilter();
-            case BEAUTY:
-                return new MagicBeautyFilter();
-            case ROMANCE:
-                return new MagicRomanceFilter();
-            case SAKURA:
-                return new MagicSakuraFilter();
-            case AMARO:
-                return new MagicAmaroFilter();
-            case WALDEN:
-                return new MagicWaldenFilter();
-            case ANTIQUE:
-                return new MagicAntiqueFilter();
-            case CALM:
-                return new MagicCalmFilter();
-            case BRANNAN:
-                return new MagicBrannanFilter();
-            case BROOKLYN:
-                return new MagicBrooklynFilter();
-            case EARLYBIRD:
-                return new MagicEarlyBirdFilter();
-            case FREUD:
-                return new MagicFreudFilter();
-            case HUDSON:
-                return new MagicHudsonFilter();
-            case INKWELL:
-                return new MagicInkwellFilter();
-            case KEVIN:
-                return new MagicKevinFilter();
-            case N1977:
-                return new MagicN1977Filter();
-            case NASHVILLE:
-                return new MagicNashvilleFilter();
-            case PIXAR:
-                return new MagicPixarFilter();
-            case RISE:
-                return new MagicRiseFilter();
-            case SIERRA:
-                return new MagicSierraFilter();
-            case SUTRO:
-                return new MagicSutroFilter();
-            case TOASTER2:
-                return new MagicToasterFilter();
-            case VALENCIA:
-                return new MagicValenciaFilter();
-            case XPROII:
-                return new MagicXproIIFilter();
-            case EVERGREEN:
-                return new MagicEvergreenFilter();
-            case HEALTHY:
-                return new MagicHealthyFilter();
-            case COOL:
-                return new MagicCoolFilter();
-            case EMERALD:
-                return new MagicEmeraldFilter();
-            case LATTE:
-                return new MagicLatteFilter();
-            case WARM:
-                return new MagicWarmFilter();
-            case TENDER:
-                return new MagicTenderFilter();
-            case NOSTALGIA:
-                return new MagicNostalgiaFilter();
-            case SUNRISE:
-                return new MagicSunriseFilter();
-            case SUNSET:
-                return new MagicSunsetFilter();
-            case SKETCH:
-                return new MagicSketchFilter();
-            default:
-                return null;
+        if (type == MagicFilterType.NONE) {
+            return new GPUImageFilter();
+        } else if (type == MagicFilterType.WHITECAT) {
+            return new MagicWhiteCatFilter();
+        } else if (type == MagicFilterType.BLACKCAT) {
+            return new MagicBlackCatFilter();
+        } else if (type == MagicFilterType.SKINWHITEN) {
+            return new MagicSkinWhitenFilter();
+        } else if (type == MagicFilterType.BEAUTY) {
+            return new MagicBeautyFilter();
+        } else if (type == MagicFilterType.ROMANCE) {
+            return new MagicRomanceFilter();
+        } else if (type == MagicFilterType.SAKURA) {
+            return new MagicSakuraFilter();
+        } else if (type == MagicFilterType.AMARO) {
+            return new MagicAmaroFilter();
+        } else if (type == MagicFilterType.WALDEN) {
+            return new MagicWaldenFilter();
+        } else if (type == MagicFilterType.ANTIQUE) {
+            return new MagicAntiqueFilter();
+        } else if (type == MagicFilterType.CALM) {
+            return new MagicCalmFilter();
+        } else if (type == MagicFilterType.BRANNAN) {
+            return new MagicBrannanFilter();
+        } else if (type == MagicFilterType.BROOKLYN) {
+            return new MagicBrooklynFilter();
+        } else if (type == MagicFilterType.EARLYBIRD) {
+            return new MagicEarlyBirdFilter();
+        } else if (type == MagicFilterType.FREUD) {
+            return new MagicFreudFilter();
+        } else if (type == MagicFilterType.HUDSON) {
+            return new MagicHudsonFilter();
+        } else if (type == MagicFilterType.INKWELL) {
+            return new MagicInkwellFilter();
+        } else if (type == MagicFilterType.KEVIN) {
+            return new MagicKevinFilter();
+        } else if (type == MagicFilterType.N1977) {
+            return new MagicN1977Filter();
+        } else if (type == MagicFilterType.NASHVILLE) {
+            return new MagicNashvilleFilter();
+        } else if (type == MagicFilterType.PIXAR) {
+            return new MagicPixarFilter();
+        } else if (type == MagicFilterType.RISE) {
+            return new MagicRiseFilter();
+        } else if (type == MagicFilterType.SIERRA) {
+            return new MagicSierraFilter();
+        } else if (type == MagicFilterType.SUTRO) {
+            return new MagicSutroFilter();
+        } else if (type == MagicFilterType.TOASTER2) {
+            return new MagicToasterFilter();
+        } else if (type == MagicFilterType.VALENCIA) {
+            return new MagicValenciaFilter();
+        } else if (type == MagicFilterType.XPROII) {
+            return new MagicXproIIFilter();
+        } else if (type == MagicFilterType.EVERGREEN) {
+            return new MagicEvergreenFilter();
+        } else if (type == MagicFilterType.HEALTHY) {
+            return new MagicHealthyFilter();
+        } else if (type == MagicFilterType.COOL) {
+            return new MagicCoolFilter();
+        } else if (type == MagicFilterType.EMERALD) {
+            return new MagicEmeraldFilter();
+        } else if (type == MagicFilterType.LATTE) {
+            return new MagicLatteFilter();
+        } else if (type == MagicFilterType.WARM) {
+            return new MagicWarmFilter();
+        } else if (type == MagicFilterType.TENDER) {
+            return new MagicTenderFilter();
+        } else if (type == MagicFilterType.NOSTALGIA) {
+            return new MagicNostalgiaFilter();
+        } else if (type == MagicFilterType.SUNRISE) {
+            return new MagicSunriseFilter();
+        } else if (type == MagicFilterType.SUNSET) {
+            return new MagicSunsetFilter();
+        } else if (type == MagicFilterType.SKETCH) {
+            return new MagicSketchFilter();
+        } else {
+            return null;
         }
     }
 }

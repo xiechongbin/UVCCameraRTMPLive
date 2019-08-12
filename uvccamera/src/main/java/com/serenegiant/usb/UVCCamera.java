@@ -40,8 +40,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UVCCamera {
-    private static final boolean DEBUG = false;
     private static final String TAG = "UVCCamera";
+    private static final boolean DEBUG = false;
+
     private static final String DEFAULT_USBFS = "/dev/bus/usb";
 
     public static final int DEFAULT_PREVIEW_WIDTH = 1280;

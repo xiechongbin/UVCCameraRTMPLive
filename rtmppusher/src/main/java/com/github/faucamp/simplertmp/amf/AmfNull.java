@@ -19,7 +19,7 @@ public class AmfNull implements AmfData {
     }
 
     @Override
-    public void readFrom(InputStream in) throws IOException {
+    public void readFrom(InputStream in) {
         // Skip data type byte (we assume it's already read)    
     }
 

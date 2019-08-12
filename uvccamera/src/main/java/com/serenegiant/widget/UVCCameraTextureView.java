@@ -300,26 +300,20 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
         @Override
         public void handleMessage(Message msg) {
             if (mThread == null) return;
-            switch (msg.what) {
-                case MSG_REQUEST_RENDER:
-                    mThread.onDrawFrame();
-                    break;
-                case MSG_SET_ENCODER:
-                    mThread.setEncoder((MediaEncoder) msg.obj);
-                    break;
-                case MSG_CREATE_SURFACE:
-                    mThread.updatePreviewSurface();
-                    break;
-                case MSG_RESIZE:
-                    mThread.resize(msg.arg1, msg.arg2);
-                    break;
-                case MSG_TERMINATE:
-                    Looper looper = Looper.myLooper();
-                    if (looper != null) {
-                        looper.quit();
-                    }
-                    mThread = null;
-                    break;
+            if (msg.what == MSG_REQUEST_RENDER) {
+                mThread.onDrawFrame();
+            } else if (msg.what == MSG_SET_ENCODER) {
+                mThread.setEncoder((MediaEncoder) msg.obj);
+            } else if (msg.what == MSG_CREATE_SURFACE) {
+                mThread.updatePreviewSurface();
+            } else if (msg.what == MSG_RESIZE) {
+                mThread.resize(msg.arg1, msg.arg2);
+            } else if (msg.what == MSG_TERMINATE) {
+                Looper looper = Looper.myLooper();
+                if (looper != null) {
+                    looper.quit();
+                }
+                mThread = null;
             }
         }
 

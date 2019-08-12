@@ -65,23 +65,14 @@ public final class Handshake {
      * Generates and writes the second handshake packet (C1)
      */
     public final void writeC1(OutputStream out) throws IOException {
-        if (DEBUG) Log.d(TAG, "writeC1");
-//        Util.writeUnsignedInt32(out, (int) (System.currentTimeMillis() / 1000)); // Bytes 0 - 3 bytes: current epoch (timestamp)
-        //out.write(new byte[]{0x09, 0x00, 0x7c, 0x02}); // Bytes 4 - 7: Flash player version: 9.0.124.2
-
-//        out.write(new byte[]{(byte) 0x80, 0x00, 0x07, 0x02}); // Bytes 4 - 7: Flash player version: 11.2.202.233
-
-
         if (DEBUG) Log.d(TAG, "writeC1(): Calculating digest offset");
         Random random = new Random();
         // Since we are faking a real Flash Player handshake, include a digest in C1        
         // Choose digest offset point (scheme 1; that is, offset is indicated by bytes 772 - 775 (4 bytes) )
         final int digestOffset = random.nextInt(HANDSHAKE_SIZE - DIGEST_OFFSET_INDICATOR_POS - 4 - 8 - SHA256_DIGEST_SIZE); //random.nextInt(DIGEST_OFFSET_INDICATOR_POS - SHA256_DIGEST_SIZE);
-
-        final int absoluteDigestOffset = ((digestOffset % 728) + DIGEST_OFFSET_INDICATOR_POS + 4);
         if (DEBUG) Log.d(TAG, "writeC1(): (real value of) digestOffset: " + digestOffset);
 
-
+        final int absoluteDigestOffset = ((digestOffset % 728) + DIGEST_OFFSET_INDICATOR_POS + 4);
         if (DEBUG) Log.d(TAG, "writeC1(): recalculated digestOffset: " + absoluteDigestOffset);
 
         int remaining = digestOffset;
@@ -96,9 +87,7 @@ public final class Handshake {
             }
         }
 
-
         // Calculate the offset value that will be written
-        //inal byte[] digestOffsetBytes = Util.unsignedInt32ToByteArray(digestOffset);// //((digestOffset - DIGEST_OFFSET_INDICATOR_POS) % 728)); // Thanks to librtmp for the mod 728                
         if (DEBUG)
             Log.d(TAG, "writeC1(): digestOffsetBytes: " + Util.toHexString(digestOffsetBytes));  //Util.unsignedInt32ToByteArray((digestOffset % 728))));
 
@@ -119,15 +108,8 @@ public final class Handshake {
 
 
         // Set the offset byte
-//        if (digestOffset > 772) {                      
         if (DEBUG) Log.d(TAG, "copying digest offset bytes in partBeforeDigest");
         System.arraycopy(digestOffsetBytes, 0, partBeforeDigest, 772, 4);
-//        } else {
-        // Implied offset of partAfterDigest is digestOffset + 32
-///        Log.d(TAG, "copying digest offset bytes in partAfterDigest");
-///        Log.d(TAG, " writing to location: " + (DIGEST_OFFSET_INDICATOR_POS - digestOffset - SHA256_DIGEST_SIZE - 8));
-//        System.arraycopy(digestOffsetBytes, 0, partAfterDigest, (DIGEST_OFFSET_INDICATOR_POS - digestOffset - SHA256_DIGEST_SIZE - 8), 4);
-//        }
 
         if (DEBUG) Log.d(TAG, "writeC1(): Calculating digest");
         byte[] tempBuffer = new byte[HANDSHAKE_SIZE - SHA256_DIGEST_SIZE];

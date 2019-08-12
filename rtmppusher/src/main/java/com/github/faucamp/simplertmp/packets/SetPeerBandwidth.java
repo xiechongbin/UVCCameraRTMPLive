@@ -37,7 +37,7 @@ public class SetPeerBandwidth extends RtmpPacket {
          */
         DYNAMIC(2);
         private int intValue;
-        private static final Map<Integer, LimitType> quickLookupMap = new HashMap<Integer, LimitType>();
+        private static final Map<Integer, LimitType> quickLookupMap = new HashMap<>();
 
         static {
             for (LimitType type : LimitType.values()) {

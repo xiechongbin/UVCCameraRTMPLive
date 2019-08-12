@@ -31,7 +31,7 @@ public enum AmfType {
     MAP(0x08),
     ARRAY(0x0A);
     private byte value;
-    private static final Map<Byte, AmfType> quickLookupMap = new HashMap<Byte, AmfType>();
+    private static final Map<Byte, AmfType> quickLookupMap = new HashMap<>();
 
     static {
         for (AmfType amfType : AmfType.values()) {
@@ -39,7 +39,7 @@ public enum AmfType {
         }
     }
 
-    private AmfType(int intValue) {
+    AmfType(int intValue) {
         this.value = (byte) intValue;
     }
 

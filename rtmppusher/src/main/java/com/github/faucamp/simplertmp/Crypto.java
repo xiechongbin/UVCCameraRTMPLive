@@ -19,8 +19,6 @@ import javax.crypto.spec.SecretKeySpec;
  * @author francois
  */
 public class Crypto {
-    private static final boolean DEBUG = false;
-
     private static final String TAG = "Crypto";
 
     private Mac hmacSHA256;
@@ -29,9 +27,9 @@ public class Crypto {
         try {
             hmacSHA256 = Mac.getInstance("HmacSHA256");
         } catch (SecurityException e) {
-            if (DEBUG) Log.e(TAG, "Security exception when getting HMAC", e);
+            Log.e(TAG, "Security exception when getting HMAC", e);
         } catch (NoSuchAlgorithmException e) {
-            if (DEBUG) Log.e(TAG, "HMAC SHA256 does not exist");
+            Log.e(TAG, "HMAC SHA256 does not exist");
         }
     }
 
@@ -48,7 +46,7 @@ public class Crypto {
             hmacSHA256.init(new SecretKeySpec(key, "HmacSHA256"));
             output = hmacSHA256.doFinal(input);
         } catch (InvalidKeyException e) {
-            if (DEBUG) Log.e(TAG, "Invalid key", e);
+            Log.e(TAG, "Invalid key", e);
         }
         return output;
     }
@@ -67,7 +65,7 @@ public class Crypto {
             hmacSHA256.init(new SecretKeySpec(key, 0, length, "HmacSHA256"));
             output = hmacSHA256.doFinal(input);
         } catch (InvalidKeyException e) {
-            if (DEBUG) Log.e(TAG, "Invalid key", e);
+            Log.e(TAG, "Invalid key", e);
         }
         return output;
     }

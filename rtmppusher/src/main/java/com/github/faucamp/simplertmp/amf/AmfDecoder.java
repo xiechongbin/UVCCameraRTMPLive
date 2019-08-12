@@ -14,31 +14,24 @@ public class AmfDecoder {
         AmfType amfType = AmfType.valueOf(amfTypeByte);
 
         AmfData amfData;
-        switch (amfType) {
-            case NUMBER:
-                amfData = new AmfNumber();
-                break;
-            case BOOLEAN:
-                amfData = new AmfBoolean();
-                break;
-            case STRING:
-                amfData = new AmfString();
-                break;
-            case OBJECT:
-                amfData = new AmfObject();
-                break;
-            case NULL:
-                return new AmfNull();
-            case UNDEFINED:
-                return new AmfUndefined();
-            case MAP:
-                amfData = new AmfMap();
-                break;
-            case ARRAY:
-                amfData = new AmfArray();
-                break;
-            default:
-                throw new IOException("Unknown/unimplemented AMF data type: " + amfType);
+        if (amfType == AmfType.NUMBER) {
+            amfData = new AmfNumber();
+        } else if (amfType == AmfType.BOOLEAN) {
+            amfData = new AmfBoolean();
+        } else if (amfType == AmfType.STRING) {
+            amfData = new AmfString();
+        } else if (amfType == AmfType.OBJECT) {
+            amfData = new AmfObject();
+        } else if (amfType == AmfType.NULL) {
+            return new AmfNull();
+        } else if (amfType == AmfType.UNDEFINED) {
+            return new AmfUndefined();
+        } else if (amfType == AmfType.MAP) {
+            amfData = new AmfMap();
+        } else if (amfType == AmfType.ARRAY) {
+            amfData = new AmfArray();
+        } else {
+            throw new IOException("Unknown/unimplemented AMF data type: " + amfType);
         }
 
         amfData.readFrom(in);

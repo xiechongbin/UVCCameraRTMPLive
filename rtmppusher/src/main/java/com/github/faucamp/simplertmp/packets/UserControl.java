@@ -20,7 +20,7 @@ public class UserControl extends RtmpPacket {
      * Control message type
      * Docstring adapted from the official Adobe RTMP spec, section 3.7
      */
-    public static enum Type {
+    public enum Type {
 
         /**
          * Type: 0
@@ -128,7 +128,7 @@ public class UserControl extends RtmpPacket {
         BUFFER_READY(32);
 
         private int intValue;
-        private static final Map<Integer, Type> quickLookupMap = new HashMap<Integer, Type>();
+        private static final Map<Integer, Type> quickLookupMap = new HashMap<>();
 
         static {
             for (Type type : Type.values()) {
@@ -136,7 +136,7 @@ public class UserControl extends RtmpPacket {
             }
         }
 
-        private Type(int intValue) {
+        Type(int intValue) {
             this.intValue = intValue;
         }
 

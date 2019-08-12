@@ -1,16 +1,17 @@
-package com.youngwu.live;
+package net.ossrs.yasea;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
+import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.AttributeSet;
+import android.view.Surface;
 
-import com.serenegiant.usb.IFrameCallback;
-import com.serenegiant.usb.Size;
-import com.serenegiant.usb.USBMonitor;
-import com.serenegiant.usb.UVCCamera;
 import com.seu.magicfilter.base.gpuimage.GPUImageFilter;
 import com.seu.magicfilter.utils.MagicFilterFactory;
 import com.seu.magicfilter.utils.MagicFilterType;
@@ -25,10 +26,11 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
- * Created by YoungWu on 2019/7/29.
+ * Created by Leo Ma on 2016/2/25.
  */
-public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Renderer {
+public class SrsCameraGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer {
     public static final int ERROR_CODE_CAMERA_OPEN_FAILED = 1;
+    public static final int ERROR_CODE_CAMERA_EVICTED = 2;
     public static final int ERROR_CODE_CAMERA_PREVIEW_FAILED = 3;
 
     private GPUImageFilter magicFilter;
@@ -44,8 +46,11 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
     private float[] mSurfaceMatrix = new float[16];
     private float[] mTransformMatrix = new float[16];
 
-    private UVCCamera uvcCamera;
+    private Camera mCamera;
     private ByteBuffer mGLPreviewBuffer;
+    private int mCamId = -1;
+    private int mPreviewRotation = 90;
+    private int mPreviewOrientation = Configuration.ORIENTATION_PORTRAIT;
 
     private Thread worker;
     private final Object writeLock = new Object();
@@ -53,11 +58,11 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
     private PreviewCallback mPrevCb;
     private ErrorCallback errorCallback;
 
-    public UVCCameraView(Context context) {
+    public SrsCameraGLSurfaceView(Context context) {
         this(context, null);
     }
 
-    public UVCCameraView(Context context, AttributeSet attrs) {
+    public SrsCameraGLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         setEGLContextClientVersion(2);
         setRenderer(this);
@@ -83,9 +88,9 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
         });
 
         // For camera preview on activity create
-        if (uvcCamera != null) {
+        if (mCamera != null) {
             try {
-                uvcCamera.setPreviewTexture(surfaceTexture);
+                mCamera.setPreviewTexture(surfaceTexture);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -117,8 +122,8 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         surfaceTexture.updateTexImage();
-        surfaceTexture.getTransformMatrix(mSurfaceMatrix);
 
+        surfaceTexture.getTransformMatrix(mSurfaceMatrix);
         Matrix.multiplyMM(mTransformMatrix, 0, mSurfaceMatrix, 0, mProjectionMatrix, 0);
         if (magicFilter != null) {
             magicFilter.setTextureTransformMatrix(mTransformMatrix);
@@ -141,10 +146,10 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
         errorCallback = callback;
     }
 
-    public void setFrameCallback(IFrameCallback frameCallback, int pixelFormat) {
-        if (uvcCamera != null) {
+    public void setPreviewCallback(Camera.PreviewCallback previewCallback) {
+        if (mCamera != null) {
             try {
-                uvcCamera.setFrameCallback(frameCallback, pixelFormat);
+                mCamera.setPreviewCallback(previewCallback);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -152,15 +157,15 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     public void setPreviewResolution(int width, int height) {
-        if (uvcCamera == null) {
+        if (mCamera == null) {
             return;
         }
         try {
             mPreviewWidth = width;
             mPreviewHeight = height;
 
-            List<Size> sizeList = uvcCamera.getSupportedSizeList();
-            Size rs = adaptPreviewResolution(width, height, sizeList);
+            Camera.Parameters params = mCamera.getParameters();
+            Camera.Size rs = adaptPreviewResolution(mCamera.new Size(width, height), params.getSupportedPreviewSizes());
             if (rs != null) {
                 mPreviewWidth = rs.width;
                 mPreviewHeight = rs.height;
@@ -190,6 +195,66 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
             }
         });
         requestRender();
+    }
+
+    public void setCameraId(int id) {
+        stopTorch();
+        mCamId = id;
+        setPreviewOrientation(mPreviewOrientation);
+    }
+
+    protected int getRotateDeg() {
+        try {
+            int rotate = ((Activity) getContext()).getWindowManager().getDefaultDisplay().getRotation();
+            switch (rotate) {
+                case Surface.ROTATION_0:
+                    return 0;
+                case Surface.ROTATION_90:
+                    return 90;
+                case Surface.ROTATION_180:
+                    return 180;
+                case Surface.ROTATION_270:
+                    return 270;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public void setPreviewOrientation(int orientation) {
+        if (mCamera == null) {
+            return;
+        }
+        try {
+            mPreviewOrientation = orientation;
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            Camera.getCameraInfo(mCamId, info);
+
+            int rotateDeg = getRotateDeg();
+
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    mPreviewRotation = info.orientation % 360;
+                    mPreviewRotation = (360 - mPreviewRotation) % 360;  // compensate the mirror
+                } else {
+                    mPreviewRotation = (info.orientation + 360) % 360;
+                }
+            } else if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    mPreviewRotation = (info.orientation - 90) % 360;
+                    mPreviewRotation = (360 - mPreviewRotation) % 360;  // compensate the mirror
+                } else {
+                    mPreviewRotation = (info.orientation + 90) % 360;
+                }
+            }
+
+            if (rotateDeg > 0) {
+                mPreviewRotation = mPreviewRotation % rotateDeg;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void enableEncoding() {
@@ -240,35 +305,40 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     public void startPreview() {
-        if (uvcCamera == null) {
+        if (mCamera == null) {
             return;
         }
         try {
-            uvcCamera.setAutoFocus(false);
-            uvcCamera.setAutoWhiteBlance(false);
-//            uvcCamera.setBrightness(80);//亮度
-//            uvcCamera.setBacklightComp(1);//逆光补偿
-//            uvcCamera.setContrast(50);//对比度
-//            uvcCamera.setExposure(156);//曝光
-//            uvcCamera.setFocus(1);
-//            uvcCamera.setGain(0);//增益
-//            uvcCamera.setGamma(12);//gama
-//            uvcCamera.setHue(50);//色调
-//            uvcCamera.setPowerlineFrequency(50);//电力线频率
-//            uvcCamera.setSaturation(56);//饱和度
-//            uvcCamera.setSharpness(16);//清晰度
-//            uvcCamera.setWhiteBlance(1);
-//            uvcCamera.setZoom(1);
+            Camera.Parameters params = mCamera.getParameters();
+            int[] range = adaptFpsRange(SrsEncoder.vFPS, params.getSupportedPreviewFpsRange());
+            params.setPreviewFpsRange(range[0], range[1]);
+            params.setPreviewFormat(ImageFormat.NV21);
+            params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+            params.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_AUTO);
+            params.setSceneMode(Camera.Parameters.SCENE_MODE_AUTO);
+            params.setRecordingHint(true);
 
-            getHolder().setFixedSize(mPreviewWidth, mPreviewHeight);
-            try {
-                uvcCamera.setPreviewSize(mPreviewWidth, mPreviewHeight, UVCCamera.FRAME_FORMAT_MJPEG);
-            } catch (Exception e) {
-                uvcCamera.setPreviewSize(mPreviewWidth, mPreviewHeight, UVCCamera.FRAME_FORMAT_YUYV);
+            List<String> supportedFocusModes = params.getSupportedFocusModes();
+            if (supportedFocusModes != null && !supportedFocusModes.isEmpty()) {
+                if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                } else if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                    mCamera.autoFocus(null);
+                } else {
+                    params.setFocusMode(supportedFocusModes.get(0));
+                }
             }
 
-            uvcCamera.setPreviewTexture(surfaceTexture);
-            uvcCamera.startPreview();
+            getHolder().setFixedSize(mPreviewWidth, mPreviewHeight);
+            params.setPreviewSize(mPreviewWidth, mPreviewHeight);
+
+            mCamera.setParameters(params);
+
+            mCamera.setDisplayOrientation(mPreviewRotation);
+
+            mCamera.setPreviewTexture(surfaceTexture);
+            mCamera.startPreview();
         } catch (Exception e) {
             e.printStackTrace();
             stopPreview();
@@ -279,9 +349,11 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
 
     public void stopPreview() {
         disableEncoding();
-        if (uvcCamera != null) {
+        stopTorch();
+        if (mCamera != null) {
             try {
-                uvcCamera.stopPreview();
+                mCamera.setPreviewCallback(null);
+                mCamera.stopPreview();
             } catch (Exception e) {
                 e.printStackTrace();
                 closeCamera();
@@ -289,16 +361,44 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
         }
     }
 
-    public void openCamera(USBMonitor.UsbControlBlock ctrlBlock) {
-        if (uvcCamera != null) {
+    public void openCamera() {
+        if (mCamera != null) {
             return;
         }
-        if (ctrlBlock == null) {
-            return;
+        if (mCamId < 0) {
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            int numCameras = Camera.getNumberOfCameras();
+            int frontCamId = -1;
+            int backCamId = -1;
+            for (int i = 0; i < numCameras; i++) {
+                Camera.getCameraInfo(i, info);
+                if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                    backCamId = i;
+                } else if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    frontCamId = i;
+                    break;
+                }
+            }
+            if (frontCamId != -1) {
+                mCamId = frontCamId;
+            } else if (backCamId != -1) {
+                mCamId = backCamId;
+            } else {
+                mCamId = 0;
+            }
         }
-        uvcCamera = new UVCCamera();
+
         try {
-            uvcCamera.open(ctrlBlock);
+            mCamera = Camera.open(mCamId);
+            mCamera.setErrorCallback(new Camera.ErrorCallback() {
+                @Override
+                public void onError(int error, Camera camera) {
+                    //may be Camera.CAMERA_ERROR_EVICTED - Camera was disconnected due to use by higher priority user
+                    stopPreview();
+                    closeCamera();
+                    callOnError(ERROR_CODE_CAMERA_EVICTED);
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
             stopPreview();
@@ -308,18 +408,18 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     public void closeCamera() {
-        if (uvcCamera != null) {
-            uvcCamera.close();
-            uvcCamera = null;
+        if (mCamera != null) {
+            mCamera.release();
+            mCamera = null;
         }
     }
 
-    private Size adaptPreviewResolution(int width, int height, List<Size> sizeList) {
+    private Camera.Size adaptPreviewResolution(Camera.Size resolution, List<Camera.Size> sizeList) {
         float diff = 100f;
-        float xdy = (float) width / (float) height;
-        Size best = null;
-        for (Size size : sizeList) {
-            if (size.width == width && size.height == height) {
+        float xdy = (float) resolution.width / (float) resolution.height;
+        Camera.Size best = null;
+        for (Camera.Size size : sizeList) {
+            if (size.equals(resolution)) {
                 return size;
             }
             float tmp = Math.abs(((float) size.width / (float) size.height) - xdy);
@@ -329,6 +429,53 @@ public class UVCCameraView extends GLSurfaceView implements GLSurfaceView.Render
             }
         }
         return best;
+    }
+
+    private int[] adaptFpsRange(int fps, List<int[]> fpsRanges) {
+        int expectedFps = fps * 1000;
+        int[] closestRange = fpsRanges.get(0);
+        int measure = Math.abs(closestRange[0] - expectedFps) + Math.abs(closestRange[1] - expectedFps);
+        for (int[] range : fpsRanges) {
+            if (range[0] <= expectedFps && range[1] >= expectedFps) {
+                int curMeasure = Math.abs(range[0] - expectedFps) + Math.abs(range[1] - expectedFps);
+                if (curMeasure < measure) {
+                    closestRange = range;
+                    measure = curMeasure;
+                }
+            }
+        }
+        return closestRange;
+    }
+
+    public void startTorch() {
+        if (mCamera != null) {
+            try {
+                Camera.Parameters params = mCamera.getParameters();
+                List<String> supportedFlashModes = params.getSupportedFlashModes();
+                if (supportedFlashModes != null && !supportedFlashModes.isEmpty()) {
+                    if (supportedFlashModes.contains(Camera.Parameters.FLASH_MODE_TORCH)) {
+                        params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+                    } else {
+                        params.setFlashMode(supportedFlashModes.get(0));
+                    }
+                    mCamera.setParameters(params);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void stopTorch() {
+        if (mCamera != null) {
+            try {
+                Camera.Parameters params = mCamera.getParameters();
+                params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                mCamera.setParameters(params);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public interface PreviewCallback {

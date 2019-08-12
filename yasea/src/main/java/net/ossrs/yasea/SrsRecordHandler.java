@@ -57,27 +57,20 @@ public class SrsRecordHandler extends Handler {
             return;
         }
 
-        switch (msg.what) {
-            case MSG_RECORD_PAUSE:
-                listener.onRecordPause();
-                break;
-            case MSG_RECORD_RESUME:
-                listener.onRecordResume();
-                break;
-            case MSG_RECORD_STARTED:
-                listener.onRecordStarted((String) msg.obj);
-                break;
-            case MSG_RECORD_FINISHED:
-                listener.onRecordFinished((String) msg.obj);
-                break;
-            case MSG_RECORD_ILLEGAL_ARGUMENT_EXCEPTION:
-                listener.onRecordIllegalArgumentException((IllegalArgumentException) msg.obj);
-                break;
-            case MSG_RECORD_IO_EXCEPTION:
-                listener.onRecordIOException((IOException) msg.obj);
-                break;
-            default:
-                throw new RuntimeException("unknown msg " + msg.what);
+        if (msg.what == MSG_RECORD_PAUSE) {
+            listener.onRecordPause();
+        } else if (msg.what == MSG_RECORD_RESUME) {
+            listener.onRecordResume();
+        } else if (msg.what == MSG_RECORD_STARTED) {
+            listener.onRecordStarted((String) msg.obj);
+        } else if (msg.what == MSG_RECORD_FINISHED) {
+            listener.onRecordFinished((String) msg.obj);
+        } else if (msg.what == MSG_RECORD_ILLEGAL_ARGUMENT_EXCEPTION) {
+            listener.onRecordIllegalArgumentException((IllegalArgumentException) msg.obj);
+        } else if (msg.what == MSG_RECORD_IO_EXCEPTION) {
+            listener.onRecordIOException((IOException) msg.obj);
+        } else {
+            throw new RuntimeException("unknown msg " + msg.what);
         }
     }
 

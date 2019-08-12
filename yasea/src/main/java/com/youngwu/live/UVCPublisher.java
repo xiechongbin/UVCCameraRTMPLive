@@ -3,6 +3,7 @@ package com.youngwu.live;
 import android.media.AudioRecord;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.AutomaticGainControl;
+import android.util.Log;
 
 import com.github.faucamp.simplertmp.RtmpHandler;
 import com.serenegiant.usb.USBMonitor;
@@ -20,12 +21,14 @@ import java.io.File;
  * Created by YoungWu on 19/7/5.
  */
 public class UVCPublisher {
+    private static final String TAG = "UVCPublisher";
+
     private static AudioRecord mic;
     private static AcousticEchoCanceler aec;
     private static AutomaticGainControl agc;
     private byte[] mPcmBuffer = new byte[4096];
     private Thread aWorker;
-    private UVCCameraView mUVVCCameraView;
+    private UVCCameraGLSurfaceView mUVVCCameraView;
     private boolean sendVideoOnly = false;
     private boolean sendAudioOnly = false;
     private int videoFrameCount;
@@ -36,9 +39,9 @@ public class UVCPublisher {
     private SrsMp4Muxer mMp4Muxer;
     private SrsEncoder mEncoder;
 
-    public UVCPublisher(UVCCameraView view) {
+    public UVCPublisher(UVCCameraGLSurfaceView view) {
         mUVVCCameraView = view;
-        mUVVCCameraView.setPreviewCallback(new UVCCameraView.PreviewCallback() {
+        mUVVCCameraView.setPreviewCallback(new UVCCameraGLSurfaceView.PreviewCallback() {
             @Override
             public void onGetRgbaFrame(byte[] data, int width, int height) {
                 calcSamplingFps();
@@ -90,14 +93,22 @@ public class UVCPublisher {
         if (AcousticEchoCanceler.isAvailable()) {
             aec = AcousticEchoCanceler.create(mic.getAudioSessionId());
             if (aec != null) {
-                aec.setEnabled(true);
+                try {
+                    aec.setEnabled(true);
+                } catch (Exception e) {
+                    Log.e(TAG, "AcousticEchoCanceler can't setEnabled(true)");
+                }
             }
         }
 
         if (AutomaticGainControl.isAvailable()) {
             agc = AutomaticGainControl.create(mic.getAudioSessionId());
             if (agc != null) {
-                agc.setEnabled(true);
+                try {
+                    agc.setEnabled(true);
+                } catch (Exception e) {
+                    Log.e(TAG, "AutomaticGainControl can't setEnabled(true)");
+                }
             }
         }
 
@@ -105,13 +116,17 @@ public class UVCPublisher {
             @Override
             public void run() {
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
-                mic.startRecording();
+                try {
+                    mic.startRecording();
+                } catch (Exception e) {
+                    Log.e(TAG, "AudioRecord startRecording failed.");
+                }
                 while (!Thread.interrupted()) {
                     if (sendVideoOnly) {
                         mEncoder.onGetPcmFrame(mPcmBuffer, mPcmBuffer.length);
                         try {
                             // This is trivial...
-                            Thread.sleep(20);
+                            Thread.sleep(200);
                         } catch (InterruptedException e) {
                             break;
                         }
@@ -120,6 +135,8 @@ public class UVCPublisher {
                             int size = mic.read(mPcmBuffer, 0, mPcmBuffer.length);
                             if (size > 0) {
                                 mEncoder.onGetPcmFrame(mPcmBuffer, size);
+                            } else {
+                                Log.e(TAG, "AudioRecord reading failed , code = " + size);
                             }
                         }
                     }
@@ -142,21 +159,30 @@ public class UVCPublisher {
 
         if (mic != null) {
             mic.setRecordPositionUpdateListener(null);
-            mic.stop();
-            mic.release();
-            mic = null;
+            try {
+                mic.stop();
+            } finally {
+                mic.release();
+                mic = null;
+            }
         }
 
         if (aec != null) {
-            aec.setEnabled(false);
-            aec.release();
-            aec = null;
+            try {
+                aec.setEnabled(false);
+            } finally {
+                aec.release();
+                aec = null;
+            }
         }
 
         if (agc != null) {
-            agc.setEnabled(false);
-            agc.release();
-            agc = null;
+            try {
+                agc.setEnabled(false);
+            } finally {
+                agc.release();
+                agc = null;
+            }
         }
     }
 
@@ -335,7 +361,7 @@ public class UVCPublisher {
         }
     }
 
-    public void setErrorCallback(UVCCameraView.ErrorCallback errorCallback) {
+    public void setErrorCallback(UVCCameraGLSurfaceView.ErrorCallback errorCallback) {
         mUVVCCameraView.setErrorCallback(errorCallback);
     }
 }

@@ -19,12 +19,8 @@ public class AmfUndefined implements AmfData {
     }
 
     @Override
-    public void readFrom(InputStream in) throws IOException {
+    public void readFrom(InputStream in) {
         // Skip data type byte (we assume it's already read)    
-    }
-
-    public static void writeUndefinedTo(OutputStream out) throws IOException {
-        out.write(AmfType.UNDEFINED.getValue());
     }
 
     @Override

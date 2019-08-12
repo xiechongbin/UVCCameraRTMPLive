@@ -114,81 +114,47 @@ public class AudioSpecificConfig extends BaseDescriptor {
             extensionAudioObjectType = 0;
         }
 
-        switch (audioObjectType) {
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            case 6:
-            case 7:
-            case 17:
-            case 19:
-            case 20:
-            case 21:
-            case 22:
-            case 23:
-                parseGaSpecificConfig(channelConfiguration, audioObjectType, bitReaderBuffer);
-                break;
-            case 8:
-                throw new UnsupportedOperationException("can't parse CelpSpecificConfig yet");
-            case 9:
-                throw new UnsupportedOperationException("can't parse HvxcSpecificConfig yet");
-            case 12:
-                throw new UnsupportedOperationException("can't parse TTSSpecificConfig yet");
-            case 13:
-            case 14:
-            case 15:
-            case 16:
-                throw new UnsupportedOperationException("can't parse StructuredAudioSpecificConfig yet");
-            case 24:
-                throw new UnsupportedOperationException("can't parse ErrorResilientCelpSpecificConfig yet");
-            case 25:
-                throw new UnsupportedOperationException("can't parse ErrorResilientHvxcSpecificConfig yet");
-            case 26:
-            case 27:
-                parseParametricSpecificConfig(bitReaderBuffer);
-                break;
-            case 28:
-                throw new UnsupportedOperationException("can't parse SSCSpecificConfig yet");
-            case 30:
-                sacPayloadEmbedding = bitReaderBuffer.readBits(1);
-                throw new UnsupportedOperationException("can't parse SpatialSpecificConfig yet");
-            case 32:
-            case 33:
-            case 34:
-                throw new UnsupportedOperationException("can't parse MPEG_1_2_SpecificConfig yet");
-            case 35:
-                throw new UnsupportedOperationException("can't parse DSTSpecificConfig yet");
-            case 36:
-                fillBits = bitReaderBuffer.readBits(5);
-                throw new UnsupportedOperationException("can't parse ALSSpecificConfig yet");
-            case 37:
-            case 38:
-                throw new UnsupportedOperationException("can't parse SLSSpecificConfig yet");
-            case 39:
-                throw new UnsupportedOperationException("can't parse ELDSpecificConfig yet");
-            case 40:
-            case 41:
-                throw new UnsupportedOperationException("can't parse SymbolicMusicSpecificConfig yet");
-            default:
+        if (audioObjectType == 1 || audioObjectType == 2 || audioObjectType == 3 || audioObjectType == 4 || audioObjectType == 6 || audioObjectType == 7 || audioObjectType == 17 || audioObjectType == 19 || audioObjectType == 20 || audioObjectType == 21 || audioObjectType == 22 || audioObjectType == 23) {
+            parseGaSpecificConfig(channelConfiguration, audioObjectType, bitReaderBuffer);
+        } else if (audioObjectType == 8) {
+            throw new UnsupportedOperationException("can't parse CelpSpecificConfig yet");
+        } else if (audioObjectType == 9) {
+            throw new UnsupportedOperationException("can't parse HvxcSpecificConfig yet");
+        } else if (audioObjectType == 12) {
+            throw new UnsupportedOperationException("can't parse TTSSpecificConfig yet");
+        } else if (audioObjectType == 13 || audioObjectType == 14 || audioObjectType == 15 || audioObjectType == 16) {
+            throw new UnsupportedOperationException("can't parse StructuredAudioSpecificConfig yet");
+        } else if (audioObjectType == 24) {
+            throw new UnsupportedOperationException("can't parse ErrorResilientCelpSpecificConfig yet");
+        } else if (audioObjectType == 25) {
+            throw new UnsupportedOperationException("can't parse ErrorResilientHvxcSpecificConfig yet");
+        } else if (audioObjectType == 26 || audioObjectType == 27) {
+            parseParametricSpecificConfig(bitReaderBuffer);
+        } else if (audioObjectType == 28) {
+            throw new UnsupportedOperationException("can't parse SSCSpecificConfig yet");
+        } else if (audioObjectType == 30) {
+            sacPayloadEmbedding = bitReaderBuffer.readBits(1);
+            throw new UnsupportedOperationException("can't parse SpatialSpecificConfig yet");
+        } else if (audioObjectType == 32 || audioObjectType == 33 || audioObjectType == 34) {
+            throw new UnsupportedOperationException("can't parse MPEG_1_2_SpecificConfig yet");
+        } else if (audioObjectType == 35) {
+            throw new UnsupportedOperationException("can't parse DSTSpecificConfig yet");
+        } else if (audioObjectType == 36) {
+            fillBits = bitReaderBuffer.readBits(5);
+            throw new UnsupportedOperationException("can't parse ALSSpecificConfig yet");
+        } else if (audioObjectType == 37 || audioObjectType == 38) {
+            throw new UnsupportedOperationException("can't parse SLSSpecificConfig yet");
+        } else if (audioObjectType == 39) {
+            throw new UnsupportedOperationException("can't parse ELDSpecificConfig yet");
+        } else if (audioObjectType == 40 || audioObjectType == 41) {
+            throw new UnsupportedOperationException("can't parse SymbolicMusicSpecificConfig yet");
         }
 
-        switch (audioObjectType) {
-            case 17:
-            case 19:
-            case 20:
-            case 21:
-            case 22:
-            case 23:
-            case 24:
-            case 25:
-            case 26:
-            case 27:
-            case 39:
-                epConfig = bitReaderBuffer.readBits(2);
-                if (epConfig == 2 || epConfig == 3) {
-                    throw new UnsupportedOperationException("can't parse ErrorProtectionSpecificConfig yet");
-                }
+        if (audioObjectType == 17 || audioObjectType == 19 || audioObjectType == 20 || audioObjectType == 21 || audioObjectType == 22 || audioObjectType == 23 || audioObjectType == 24 || audioObjectType == 25 || audioObjectType == 26 || audioObjectType == 27 || audioObjectType == 39) {
+            epConfig = bitReaderBuffer.readBits(2);
+            if (epConfig == 2 || epConfig == 3) {
+                throw new UnsupportedOperationException("can't parse ErrorProtectionSpecificConfig yet");
+            }
         }
 
         if (extensionAudioObjectType != 5 && bitReaderBuffer.remainingBits() >= 16) {
